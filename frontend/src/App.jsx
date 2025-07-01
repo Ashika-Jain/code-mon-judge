@@ -11,6 +11,7 @@ import Myaccount from './Myaccount';
 import UserAccount from './components/UserAccount';
 import Upload from './Upload';
 import ProtectedRoute from './components/ProtectedRoute';
+import ProfilePage from './components/ProfilePage';
 
 function App() {
   return (
@@ -53,6 +54,11 @@ function App() {
           <Route path="/upload" element={
             <ProtectedRoute>
               <Upload />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           } />
         </Routes>

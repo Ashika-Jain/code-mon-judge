@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const Submission = require('../models/Submission');
+const Problem = require('../models/Problem');
 
 // @route   POST api/auth/register
 // @desc    Register a user
@@ -187,6 +189,53 @@ router.get('/check', auth, async (req, res) => {
     res.json({ isAuthenticated: true, user: req.user });
   } else {
     res.json({ isAuthenticated: false });
+  }
+});
+
+// @route   GET /api/auth/profile
+// @desc    Get current user's profile with stats and recent submissions
+// @access  Private
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Stats
+    const stats = {
+      solved: user.problemsSolved || 0,
+      submissions: user.submissions || 0,
+      accuracy: user.submissions ? Math.round((user.problemsSolved / user.submissions) * 100) + '%' : '0%'
+    };
+
+    // Recent submissions (last 5)
+    const submissions = await Submission.find({ userId: user._id })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('problemId');
+
+    const recentSubmissions = submissions.map(sub => ({
+      id: sub._id,
+      problem: sub.problemId?.title || 'Unknown',
+      status: sub.status === 'accepted' ? 'Accepted' : sub.status === 'wrong_answer' ? 'Wrong Answer' : sub.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      date: sub.createdAt.toISOString().slice(0, 10)
+    }));
+
+    // Badges (simple example)
+    const badges = [];
+    if (user.submissions > 0) badges.push({ type: 'first_submission', label: 'First Submission' });
+    if (user.problemsSolved >= 10) badges.push({ type: 'ten_solved', label: '10 Problems Solved' });
+
+    res.json({
+      username: user.username,
+      email: user.email,
+      avatar: '', // Add avatar URL if available
+      stats,
+      badges,
+      recentSubmissions
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

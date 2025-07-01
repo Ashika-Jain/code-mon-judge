@@ -1,0 +1,380 @@
+.ProblemList-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.User_img {
+  height: 30px;
+  align-items: center;
+  padding-bottom: 3px;
+}
+
+.navbar_more {
+  border: 0.7px solid #eee;
+}
+
+.main_block {
+  display: flex;
+  height: 100vh;
+}
+
+.ProblemList {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  margin-top: 3px;
+  overflow: auto;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.pie-chart-container {
+  flex: 1;
+  /* border: 9px solid #eee; */
+  /* height: 2000px ; */
+  /* border: 1px solid black; */
+ 
+}
+
+.tpart{
+  display: flex;
+  color: #333;
+  justify-content: center;
+  text-align: center;
+
+}
+
+.heading_p {
+  font-size: 29px;
+  letter-spacing: 1.4px;
+  font-family: Arial, sans-serif;
+  /* font-family: "Arial Black"; */
+  font-weight: 620;
+  margin-top: 30px;
+  height: 90px;
+  padding-top: 22px;
+  padding-left: 40px;
+  flex:1;
+  color:#484848;
+  text-transform: uppercase;
+  /* color:#d39090; */
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.heading_image{
+  /* background-color: pink; */
+  flex:1;
+  height:200px;
+
+
+}
+.heading_image img{
+  background-color: pink;
+  height:90%;
+  margin-left: auto;margin-right: auto;
+
+
+}
+
+.pie-chart-container {
+
+  padding-left: 20px;
+  /* margin-left: 50px; */
+  margin-left: auto;
+  margin-right: auto;
+  width: 250px;
+  height: 250px;
+  flex: 1;
+  margin-top: 15px;
+}
+
+.pp {
+  margin-right: 10px;
+}
+
+
+
+.all_prob_list {
+  margin-left: 30px;
+  /* margin-top: 48px; */
+  width: inherit;
+  padding-left: 20px;
+}
+
+
+.prob-container {
+  flex: 3;
+}
+
+.side_block {
+  flex: 1;
+  text-align: center;
+  background-color: rgb(245, 245, 245);
+}
+
+.total-prob {
+  font-size: 19px;
+  padding: 3px;
+}
+
+@media (max-width: 768px) {
+  .ProblemList {
+    font-size: 2.5rem;
+    padding: 15px;
+  }
+}
+
+.solved-problems {
+  margin-right: 30px;
+  margin-left: 30px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+  padding-left: 15px;
+  padding-right: 15px;
+  border-radius: 10px;
+  padding-top:15px;
+  padding-bottom:30px;
+  padding-right:25px;
+  margin-left: 50px;
+  padding-left: 15px;
+  margin-right: 50px;
+}
+
+.solved-problems h3 {
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.solved-problems ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.solved-problems li {
+  margin-bottom: 5px;
+}
+
+.solved-problems .label {
+  display: inline-block;
+  width: 80px;
+}
+
+.solved-problems .bar {
+  position: relative;
+  margin-top: 20px;
+  height:3px;
+  margin-right: 20px;
+  margin-left: 20px;
+  background-color: #f0f0f0;
+}
+
+.solved-problems .bar-inner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+}
+
+.bar_g{
+  font-weight: 600;
+  margin-bottom: 17px;
+  font-size: 23px;
+  
+}
+
+.solved-problems{
+  background-color: white;
+}
+
+.solved-problems .bar-inner.basic-bar {
+  background-color: #CCE8CC;
+  /* background-color: white; */
+}
+
+.solved-problems .bar-inner.easy-bar {
+  background-color: #AEE1AE;
+}
+
+.solved-problems .bar-inner.medium-bar {
+  background-color: #FF8360;
+}
+
+.solved-problems .bar-inner.hard-bar {
+  background-color: #E94233;
+}
+
+.solved-problems .count {
+  position: absolute;
+  margin-left: 20px;
+  font-weight: bold;
+  left: -50px; /* Adjust position to move count outside the bar */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px; /* Adjust font size if needed */
+  color: #000; /* Adjust text color if needed */
+}
+
+.bar_g {
+  /* background-color: rgb(245, 249, 245); */
+  margin-top: 30px;
+}
+
+
+.side_block h4{
+  margin-top:25px;
+  font-size:21px;
+  font-weight: 500;
+  
+
+
+}
+
+.main-nav li{
+  cursor: pointer;
+}
+
+.leader_board{
+  margin-top:20px;
+  font-size:22px;
+  font-weight: 600;
+  color:#3e3e3e;
+}
+
+@media (max-width: 600px) {
+  .main_block {
+    /* display: flex; */
+    flex-direction: column; /* Specify direction */
+    background-attachment: black;
+  }
+
+  .side_block{
+    height: 100px;
+    /* width: 100px; */
+  }
+}
+
+@media (max-width: 450px) {
+  .main_block {
+    /* display: flex; */
+
+    flex-direction: column; /* Specify direction */
+    background-attachment: black;
+  }
+
+  .heading_p{
+    font-size: 20px;
+    
+  }
+
+  .pie-chart-container{
+    width: 80%;
+  }
+}
+
+
+
+
+  .tags_sec {
+    margin-top: 50px;
+
+    margin-left: 20px;
+    margin-right: 5px;
+    height:130px;
+    overflow-y: auto; 
+  }
+
+  .tags_head {
+    font-weight: 500;
+    letter-spacing: 1px;
+    /* padding-top: 7px; */
+    /* padding-bottom: 7px; */
+    color: #333;
+    font-size: 18px;
+  }
+
+  .tags_input {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .tags_input label {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    user-select: none;
+    width: calc(50% - 15px); /* Adjust width for two tags per row */
+  }
+
+  .tags_input input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-radius: 3px;
+    outline: none;
+    transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    vertical-align: middle;
+    margin-right: 10px;
+  }
+
+  .tags_input input[type="checkbox"]:checked {
+    border-color: #2196f3;
+    background-color: #2196f3;
+  }
+
+  .tags_input input[type="checkbox"]:focus {
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.3);
+  }
+
+  .tags_input label span {
+    font-size: 14px;
+    color: #333;
+  }
+
+
+  .pie-chart-container h4{
+    font-weight: 600;
+    margin-bottom: 17px;
+    font-size: 23px;
+    /* background-color: pink; */
+    color: rgb(59, 59, 59);
+    /* letter-spacing: 0.5px; */
+  }
+  
+
+  .tags_head{
+    font-weight: 600;
+    margin-bottom: 17px;
+    font-size: 23px;
+    color: #484848;
+  }
+  
+.home-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.home-button:hover {
+  background-color: #45a049;
+}
+
+.home-button i {
+  font-size: 16px;
+}
+  

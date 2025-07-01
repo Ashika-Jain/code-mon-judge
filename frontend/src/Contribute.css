@@ -1,0 +1,414 @@
+/* Container Styling */
+.container {
+  display: flex;
+  gap: 60px;
+  padding: 20px;
+}
+
+/* Main Content Styling */
+.main_p {
+  color: rgb(206, 30, 30);
+  margin-top:10px;
+  }
+  .main_p span {
+  color: black;
+}
+
+/* Left Section Styling */
+.left-section {
+  flex: 1.6;
+  background-color: #f0f0f0;
+  /* padding: 20px; */
+}
+.left-section img {
+  height: 250px;
+  margin-left:30px;
+  margin-top: 20px;
+
+}
+.instructions {
+  border-bottom: 1px solid black;
+  border-right: 1px solid black;
+  margin: 20px 60px;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: #f8f9fa; /* Light gray background */
+  max-height: 300px; /* Limit the height */
+  overflow-y: auto;
+}
+.instructions_heading {
+  font-size: 24px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  text-transform: uppercase;
+  border-bottom: 2px solid #e53e0c;
+  padding-bottom: 5px;
+}
+.instructions_tagline {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.instructions_points {
+  margin-bottom: 10px;
+}
+.instructions_points span {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+/* Right Section Styling */
+.right-section {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 50px 0;
+}
+
+/* Form Container Styling */
+.form-container {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  width: 100%;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+/* Form Styling */
+.form {
+  flex: 1;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+.form input,
+.form select,
+.form textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.form input[type="submit"] {
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.form input[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+/* Additional Form Element Styling */
+.show_tc,
+.show_output,
+.desc_area,
+.hints_area {
+  height: 150px;
+  resize: vertical;
+}
+
+.create_prob {
+  transition: background-color 0.3s;
+  padding: 10px 24px;
+  background-color: #ff6f61;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+}
+.create_prob:hover {
+  background-color: #007bff;
+}
+.create_prob:active {
+  background-color: #ff6f61;
+}
+
+/* File Upload Styling */
+.file-upload {
+  margin-top: 20px;
+}
+.file-label {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.7px;
+}
+
+/* Test Case Block Styling */
+.test-case-block {
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background-color: #f3f5f7;
+  width: 300px;
+}
+.test-case-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.test-case-section {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+
+/* Text Area Styling */
+.second_form textarea {
+  border: 1px solid black;
+  width: 100%;
+  margin: 10px 0;
+}
+
+/* Label Styling */
+.add_desc,
+.add_hints,
+.levelniklenge,
+.tagsniklenge ,
+.add_constraints {
+  letter-spacing: 1px;
+  font-weight: 600;
+  font-size: 18px;
+  padding-top: 10px;
+  
+  }
+
+  .hints_area{
+    height:70px;
+    max-height: 70px;
+  }
+  
+  .probniklenge {
+    font-size: 26px;
+    /* background-color:red; */
+  letter-spacing: 1px;
+  font-weight: 600;
+  height:400px;
+  color: #4a90e2;
+  
+}
+
+.probniklenge input{
+  margin-top: 10px;
+  margin-bottom: 10px;
+  height:50px;
+  border:1.6px solid  black;
+  margin-bottom:30px;
+  padding-left:8px;
+  color: #ff6f61;
+}
+
+.prob_namE{
+  border:1px solid grey;
+}
+
+.label_show_tc, .label_show_output , .add_desc , .add_hints {
+  background-color: #fff;
+  font-size: 17px;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 4px 8px rgba(160, 159, 159, 0.1);
+}
+
+.label_show_tc {
+  text-align: center;
+  font-weight: 600;
+}
+
+.label_show_output {
+  text-align: center;
+  font-weight: 600;
+}
+
+.label_show_tc textarea, .label_show_output textarea , .add_desc textarea , .add_hints textarea {
+  width: 100%;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  /* margin-top: 10px; */
+  /* margin-bottom: 10px; */
+  max-height: 130px;
+  resize: vertical;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+
+.label_show_tc textarea:focus, .label_show_output textarea:focus {
+  border-color: #66afe9;
+  outline: none;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
+}
+
+
+
+/* Additional Button Styling */
+.addtc {
+  background-color: #ff6f61;
+  border: none;
+  color: white;
+  padding: 4px 3px;
+  text-align: center;
+  display: inline-block;
+  font-size: 17px;
+  margin: 10px 7px 10px 7px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+.addtc:hover {
+  background-color: #e85a4f;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.remtc {
+  margin: 7px;
+  border: 1px solid #ccc;
+  box-shadow: 0 0 8px red;
+  border-radius: 4px;
+  padding: 3px;
+}
+
+/* Instruction Styling */
+.make_sure {
+  margin-top: 10px;
+  padding: 6px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  font-size: 17px;
+  margin-bottom: 20px;
+  
+}
+.make_sure span {
+  font-size: 23px;
+  border: 1px solid black;
+  border-radius: 18px;
+  padding: 3px 6px;
+  margin-left: 10px;
+  color:red;
+  font-weight: 600;
+}
+
+/* Counter Styling */
+.counter_num {
+  font-weight: bold;
+  border-radius: 60%;
+  padding: 5px 10px;
+  border: 1px solid black;
+}
+
+/* Typography Styling */
+.make_contri {
+  font-family: 'Arial Black', sans-serif;
+  font-size: 20px;
+  font-weight: bold;
+  color: #ff5733;
+  margin-top: 10px;
+  text-align: center;
+  transform: rotate(-5deg);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+.make_contri2 {
+  font-family: 'Impact', sans-serif;
+  font-size: 48px;
+  font-weight: bold;
+  color: #4a90e2;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transform: rotate(-5deg);
+}
+
+/* Dropdown Styling */
+.DropDown {
+  margin: 2px;
+  border: 1px solid black;
+  border-radius: 5px;
+  margin-bottom: 12px;
+}
+
+.submit_button {
+  width:70%;
+  padding-left: 30px;
+width: 100%;
+}
+.submit{
+  margin-top:20px;
+  /* background-color:#ff5733 ; */
+  }
+
+  .constraintsniklenge{
+    height: 30px;
+  }
+
+
+
+  /* Styling for constraints textarea */
+.constraints_area {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  margin: 10px 0;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  resize: vertical;
+}
+
+
+/* Ensure styles for the overall form elements */
+textarea {
+  font-family: Arial, sans-serif;
+}
+
+input, select, textarea {
+  box-sizing: border-box;
+}
+
+
+.upload_txt{
+  margin-top:80px;
+  margin-left: 20px;
+}
+
+.upload_comp{
+  background-color: pink;
+}
+
+.constraintsniklenge h2{
+  letter-spacing: 1px;
+  margin-top: 4px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.constraints_area{
+  
+  max-height:100px ;
+  background-color:#f8f8f8;
+}
+
+
+.upload_txt{
+  /* background-color: #ddd; */
+  font-weight: 600;
+}

@@ -1,0 +1,131 @@
+body{
+  margin: 0;
+  padding: 0;
+  /* text-align: center; */
+  /* margin-right: 100px; */
+}
+.coder-image {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .entry {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    justify-content: center;
+    /* margin-top: 100px; */
+  }
+  
+  .entry h1 {
+    margin-bottom: 20px; 
+  }
+  
+
+  .entry img {
+    max-width: 100%;
+    height: 450px; 
+  }
+  
+
+  .solverButton {
+    background-color: #5f6ae7;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    /* margin-top: 120px; */
+    margin-top: 40px;
+    display: block;
+    margin: 0 auto;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.9s, transform 0.2s, box-shadow 0.3s;
+    /* padding-top: 20px; */
+}
+
+  .solverButton:hover {
+    background-color: #5c6bc0; /* Lighter navy blue on hover */
+    transform: scale(1.04); /* Slightly larger size on hover */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3); /* Larger shadow on hover */
+  }
+  
+  
+  
+
+
+
+.website_name {
+  font-family: "Arial Black";
+  font-weight: normal;
+  color: #1C2541;
+  font-size: 58px;
+  display: inline-block;
+
+  text-align: center;
+  width: 100%;
+  margin: auto;
+  padding: 20px 0;
+  line-height: 1.2;
+  transform: scale(0.5);
+  animation: revealText 1s ease forwards;
+  margin-top: 60px;
+  /* margin-bottom: 40px; */
+}
+ 
+.website_name span{
+  color: rgb(86, 86, 87);
+}
+  @keyframes revealText {
+    0% {
+      opacity: 0; /* Start with zero opacity */
+      transform: scale(0.5); /* Start with smaller size */
+    }
+    100% {
+      opacity: 1; /* End with full opacity */
+      transform: scale(1); /* End with original size */
+    }
+  }
+  
+
+
+.description {
+    margin: 0 auto;
+    margin-top: 70px;
+    padding: 0 60px;
+    font-size: 19px;
+    color: rgb(46, 44, 44);
+    text-align: center;
+    justify-content: center;
+    /* letter-spacing: 1px; */
+    padding-top: 20px;
+    word-spacing: 1px;
+
+
+}
+.description h1 span {
+  color: black;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+.description h1  {
+  padding-bottom: 40px;
+}
+
+.oneliner{
+    font-size:24px;
+    /* margin-top: 3px; */
+    width: 100%;
+    /* background-color: pink; */
+    text-align: center;
+    color: gray;
+    margin: 0 auto;
+    padding: 0 230px;
+    /* word-spacing: px; */
+}
+

@@ -1,0 +1,98 @@
+.single-entry {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 columns with equal width */
+  gap: 5px; /* Gap between grid items */
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  transition: width 0.5s;
+  margin-right: 10px;
+  margin-bottom: 10px; /* Increased margin-bottom for better spacing */
+}
+.single-entry:hover{
+  
+}
+/* Apply red underline if problem is not attempted */
+.single-entry.not-attempted {
+  border-left: 3px solid red;
+}
+
+/* Apply green underline if problem is done */
+.single-entry.done {
+  border-left: 3px solid green;
+}
+
+/* Other styles for grid items */
+.name-entry,
+.tags-entry,
+.submissions-entry,
+.difficulty-level,
+.action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  font-size: 14px;
+  }
+
+  .tags-entry{
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .name-entry{
+    font-weight: 630;
+    font-size: 18px;
+
+}
+
+/* Style for solve button */
+.solve-button {
+  font-size: 18px;
+  color: grey;
+  cursor: pointer;
+  color: rgb(156, 23, 85);
+  /* border: 0.5px solid black; */
+  transition: color 0.5s;
+  font-weight: 600;
+  transition: color 0.6s;
+}
+
+.solve-button:hover {
+  color: rgb(227, 145, 196);
+}
+
+/* Difficulty level colors */
+.difficulty-level.basic-difficulty {
+  border:1px solid #CCE8CC;
+text-transform:uppercase;
+border-radius: 20px;
+font-weight: 500; 
+}
+
+
+
+.difficulty-level.easy-difficulty {
+  /* background-color: #AEE1AE; */
+  border-radius: 20px;
+  border:2px solid #CCE8CC;
+  font-weight: 500;
+  /* color:#CCE8CC; */
+
+  text-transform:uppercase;
+  /* margin-left: 20px; */
+  /* margin-left: 20px; */
+  }
+  
+  .difficulty-level.medium-difficulty {
+    border-radius: 20px;
+    text-transform:uppercase;
+    border:2px solid #FF8360;
+    }
+    
+    .difficulty-level.hard-difficulty {
+    border-radius: 20px;
+  text-transform:uppercase;
+  border:2px solid #E94233;
+}

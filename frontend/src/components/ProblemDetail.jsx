@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../utils/axiosConfig';
 import axios from 'axios';
+import CodeEditor from "../CodeEditor";
+import Navbar from './Navbar';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://localhost:5001';
 
@@ -23,6 +25,8 @@ const ProblemDetail = () => {
     const [customOutput, setCustomOutput] = useState('');
     const [runStatus, setRunStatus] = useState('idle');
     const [runError, setRunError] = useState('');
+    const [verdict, setVerdict] = useState('');
+    const [theme, setTheme] = useState('light');
 
     console.log('=== ProblemDetail Component ===');
     console.log('1. Current location:', location.pathname);
@@ -126,7 +130,8 @@ const ProblemDetail = () => {
                     problemId: id,
                     code: code.trim(),
                     language: language.toLowerCase(),
-                    input: input // Only custom input
+                    input: input || "",
+                    mode: "run"
                 },
                 {
                     headers: {
@@ -208,7 +213,8 @@ const ProblemDetail = () => {
                     problemId: id,
                     code: code.trim(),
                     language: language.toLowerCase(),
-                    input: '' // Always empty for submit
+                    input: '', // Always empty for submit
+                    mode: "submit"
                 },
                 {
                     headers: {
@@ -290,117 +296,145 @@ const ProblemDetail = () => {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="max-w-4xl mx-auto">
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                    <h1 className="text-3xl font-bold mb-4">{problem?.name}</h1>
-                    <div className="prose max-w-none">
-                        <p className="text-gray-700">{problem?.description}</p>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
+            <Navbar />
+            <div className="max-w-7xl mx-auto p-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* LEFT: Problem Description */}
+                    <div className="space-y-6">
+                        {/* Header */}
+                        <div className="rounded-xl shadow-lg p-6 mb-4 bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 backdrop-blur-md border border-blue-200/40">
+                            <h1 className="text-4xl font-extrabold text-gray-800 drop-shadow">{problem?.title || problem?.name}</h1>
+                            <div className="flex gap-2 mt-2 flex-wrap">
+                                {problem?.tags?.split(',').map(tag => (
+                                    <span key={tag} className="bg-white/60 px-3 py-1 rounded-full text-xs font-semibold shadow hover:bg-white/80 transition text-blue-700">{tag}</span>
+                                ))}
+                            </div>
+                            <span className={`inline-block mt-4 px-4 py-1 rounded-full text-white font-semibold shadow-lg ${problem?.difficulty === 'Easy' ? 'bg-green-400' : problem?.difficulty === 'Medium' ? 'bg-yellow-400' : 'bg-red-400'}`}>{problem?.difficulty}</span>
+                        </div>
+                        {/* Problem Statement */}
+                        <div className="bg-white/90 rounded-2xl shadow-lg p-8 space-y-6 border border-blue-100">
+                            <h2 className="text-2xl font-bold text-blue-700">Problem Statement</h2>
+                            <p className="text-gray-700 whitespace-pre-line">{problem?.description}</p>
+                            <div>
+                                <h3 className="font-semibold text-purple-700">Constraints</h3>
+                                <p className="text-gray-600 whitespace-pre-line">{problem?.constraints}</p>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 className="font-semibold text-blue-600">Sample Input</h4>
+                                    <pre className="bg-blue-50 p-3 rounded-lg border border-blue-100">{problem?.showtc}</pre>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-purple-600">Sample Output</h4>
+                                    <pre className="bg-purple-50 p-3 rounded-lg border border-purple-100">{problem?.showoutput}</pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div className="bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold mb-4">Submit Solution</h2>
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-4">
-                            <label className="block text-gray-700 mb-2">Language:</label>
-                            <select
-                                value={language}
-                                onChange={(e) => setLanguage(e.target.value)}
-                                className="w-full p-2 border rounded"
-                            >
-                                <option value="cpp">C++</option>
-                                <option value="java">Java</option>
-                                <option value="python">Python</option>
-                            </select>
+                    {/* RIGHT: Editor, Input/Output, Actions, Review */}
+                    <div className="space-y-6">
+                        {/* Language & Theme Selectors */}
+                        <div className="flex flex-col md:flex-row gap-4 items-center">
+                            <div>
+                                <label className="mr-2 font-medium text-blue-700">Language:</label>
+                                <select
+                                    value={language}
+                                    onChange={e => setLanguage(e.target.value)}
+                                    className="border rounded px-2 py-1 shadow focus:ring-2 focus:ring-blue-300"
+                                >
+                                    <option value="cpp">C++</option>
+                                    <option value="java">Java</option>
+                                    <option value="python">Python</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="mr-2 font-medium text-purple-700">Theme:</label>
+                                <select
+                                    value={theme}
+                                    onChange={e => setTheme(e.target.value)}
+                                    className="border rounded px-2 py-1 shadow focus:ring-2 focus:ring-purple-300"
+                                >
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                </select>
+                            </div>
                         </div>
-                        <div className="mb-4">
-                            <label className="block text-gray-700 mb-2">Code:</label>
-                            <textarea
+                        {/* Code Editor */}
+                        <div className="bg-white rounded-2xl shadow-lg p-4 border border-blue-100 transition hover:shadow-2xl">
+                            <CodeEditor
                                 value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                                className="w-full h-64 p-2 border rounded font-mono"
-                                placeholder="Enter your solution here..."
+                                language={language === 'cpp' ? 'cpp' : language === 'python' ? 'python' : 'javascript'}
+                                onChange={setCode}
+                                height="350px"
+                                theme={theme}
                             />
                         </div>
-                        <div className="mb-4">
-                            <label className="block text-gray-700 mb-2">Custom Input:</label>
-                            <textarea
-                                value={input}
-                                onChange={e => setInput(e.target.value)}
-                                className="w-full h-24 p-2 border rounded font-mono"
-                                placeholder="Enter custom input for your code (optional)..."
-                            />
+                        {/* Custom Input & Output */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-white rounded-2xl shadow p-4 border border-blue-100">
+                                <label className="block font-medium mb-2 text-blue-700">Custom Input</label>
+                                <CodeEditor
+                                    value={input}
+                                    language={language === 'cpp' ? 'cpp' : language === 'python' ? 'python' : 'javascript'}
+                                    onChange={setInput}
+                                    height="120px"
+                                    theme={theme}
+                                />
+                            </div>
+                            <div className="bg-white rounded-2xl shadow p-4 border border-purple-100">
+                                <label className="block font-medium mb-2 text-purple-700">Output</label>
+                                <CodeEditor
+                                    value={customOutput}
+                                    language={language === 'cpp' ? 'cpp' : language === 'python' ? 'python' : 'javascript'}
+                                    onChange={() => {}}
+                                    height="120px"
+                                    readOnly={true}
+                                    theme={theme}
+                                />
+                            </div>
                         </div>
-                        <div className="flex gap-4">
+                        {/* Action Buttons */}
+                        <div className="flex gap-4 justify-end">
                             <button
-                                type="button"
                                 onClick={handleRun}
                                 disabled={runStatus === 'running' || !isAuthenticated}
-                                className={`py-2 px-4 rounded-md text-white font-medium bg-green-600 hover:bg-green-700 disabled:bg-gray-400`}
+                                className="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-4 py-2 rounded shadow transition disabled:bg-gray-400"
                             >
                                 {runStatus === 'running' ? 'Running...' : 'Run'}
                             </button>
                             <button
-                                type="submit"
+                                onClick={handleSubmit}
                                 disabled={submissionStatus === 'submitting' || !isAuthenticated}
-                                className={`py-2 px-4 rounded-md text-white font-medium ${
-                                    submissionStatus === 'submitting' || !isAuthenticated
-                                        ? 'bg-gray-400 cursor-not-allowed'
-                                        : 'bg-blue-600 hover:bg-blue-700'
-                                }`}
+                                className="bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white px-4 py-2 rounded shadow transition disabled:bg-gray-400"
                             >
                                 {submissionStatus === 'submitting' ? 'Submitting...' : 'Submit'}
                             </button>
+                            <button
+                                onClick={handleAiReview}
+                                disabled={loadingReview || !code.trim()}
+                                className="bg-gradient-to-r from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white px-4 py-2 rounded shadow transition disabled:bg-gray-400"
+                            >
+                                {loadingReview ? 'Reviewing...' : 'AI Review'}
+                            </button>
                         </div>
-                    </form>
-                    {submissionStatus === 'success' && (
-                        <div className="mt-4 p-4 bg-green-100 text-green-700 rounded-md">
-                            Solution submitted successfully!
-                        </div>
-                    )}
-                    {submissionStatus === 'wrong' && (
-                        <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md">
-                            Wrong answer! Your solution did not pass all test cases.
-                        </div>
-                    )}
-                    {submissionStatus === 'runtime_error' && (
-                        <div className="mt-4 p-4 bg-orange-100 text-orange-700 rounded-md">
-                            Runtime error occurred while running your code.
-                        </div>
-                    )}
-                    {submissionError && (
-                            <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md">
-                                {submissionError}
+                        {/* Verdict/Feedback */}
+                        {submissionStatus && (
+                            <div className="mt-4 p-4 rounded bg-gradient-to-r from-green-50 to-blue-50 border border-blue-100 shadow">
+                                <h3 className="font-semibold mb-2 text-blue-700">Verdict / Feedback</h3>
+                                {submissionStatus === 'success' && <div className="text-green-700">Solution submitted successfully!</div>}
+                                {submissionStatus === 'wrong' && <div className="text-red-700">Wrong answer! Your solution did not pass all test cases.</div>}
+                                {submissionStatus === 'runtime_error' && <div className="text-orange-700">Runtime error occurred while running your code.</div>}
+                                {submissionError && <div className="text-red-700">{submissionError}</div>}
                             </div>
-                    )}
-                    {/* AI Review Section */}
-                    <div className="mt-8 p-4 bg-gray-50 rounded-md border">
-                        <h3 className="text-lg font-semibold mb-2">AI Review</h3>
-                        <button
-                            onClick={handleAiReview}
-                            disabled={loadingReview || !code.trim()}
-                            className="mb-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:bg-gray-400"
-                        >
-                            {loadingReview ? 'Reviewing...' : 'Get AI Review'}
-                        </button>
-                        <div className="text-gray-800 whitespace-pre-wrap mt-2 min-h-[40px]">
-                            {aiReview}
+                        )}
+                        {/* AI Review */}
+                        <div className="mt-4 p-4 rounded bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 shadow">
+                            <h3 className="font-semibold mb-2 text-purple-700">AI Review</h3>
+                            <div className="text-gray-800 whitespace-pre-wrap min-h-[40px]">{aiReview}</div>
                         </div>
                     </div>
-                    {customOutput && (
-                        <div className="mt-8 p-4 bg-yellow-50 rounded-md border">
-                            <h3 className="text-lg font-semibold mb-2">Custom Input Output</h3>
-                            <div className="text-gray-800 whitespace-pre-wrap mt-2 min-h-[40px]">
-                                {customOutput}
-                            </div>
-                        </div>
-                    )}
-                    {runError && (
-                        <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md">
-                            {runError}
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

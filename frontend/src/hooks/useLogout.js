@@ -16,8 +16,8 @@ const useLogout = () => {
     document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     document.cookie = 'user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
-    console.log('Logout: Redirecting to login page');
-    navigate('/login', { replace: true });
+    console.log('Logout: Redirecting to landing page');
+    navigate('/', { replace: true });
   };
 
   return logout;

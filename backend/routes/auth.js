@@ -179,4 +179,15 @@ router.get('/verify', async (req, res) => {
   }
 });
 
+// @route   GET /auth/check
+// @desc    Check authentication status
+// @access  Private
+router.get('/check', auth, async (req, res) => {
+  if (req.user) {
+    res.json({ isAuthenticated: true, user: req.user });
+  } else {
+    res.json({ isAuthenticated: false });
+  }
+});
+
 module.exports = router; 

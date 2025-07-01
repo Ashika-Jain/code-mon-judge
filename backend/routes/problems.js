@@ -3,8 +3,8 @@ const router = express.Router();
 const Problem = require('../models/Problem');
 const auth = require('../middleware/auth');
 
-// Get all problems
-router.get('/', auth, async (req, res) => {
+// Get all problems (public)
+router.get('/', async (req, res) => {
   try {
     const problems = await Problem.find()
       .select('-testCases')

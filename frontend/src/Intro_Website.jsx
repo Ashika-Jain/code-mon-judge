@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router'
-import Typical from 'react-typical';
+import { TypeAnimation } from 'react-type-animation';
 import coderGif from './assets/coder.gif';
 import { FaGithub, FaLinkedin, FaDiscord } from 'react-icons/fa';
 import giphyGif from './assets/giphy.gif';
@@ -50,11 +50,12 @@ function Intro_Website() {
           <h1 className="text-5xl sm:text-6xl font-extrabold mb-2 bg-gradient-to-r from-purple-700 to-pink-500 bg-clip-text text-transparent">
             Welcome to Code Mon
           </h1>
-          <Typical
-            steps={['Where coding challenges transform into solutions...', 2000]}
-            loop={Infinity}
+          <TypeAnimation
+            sequence={['Where coding challenges transform into solutions...', 2000]}
             wrapper="p"
-            className="text-lg sm:text-xl text-gray-700 mb-6 mt-2 min-h-[2.5rem]"
+            speed={50}
+            style={{ fontSize: '1.25rem', minHeight: '2.5rem', marginBottom: '1.5rem', marginTop: '0.5rem', color: '#374151' }}
+            repeat={Infinity}
           />
           <button
             className="bg-gradient-to-r from-purple-700 to-pink-500 text-white px-8 py-3 rounded-xl shadow-lg font-semibold hover:scale-105 transition mb-8"

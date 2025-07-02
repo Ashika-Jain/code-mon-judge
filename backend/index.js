@@ -54,6 +54,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/online-ju
 app.use('/api/auth', require('./routes/auth.js'));
 app.use('/api/problems', require('./routes/problems.js'));
 app.use('/api/submissions', require('./routes/submissions.js'));
+app.use('/api/daily-problem', require('./routes/dailyProblem.js'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'Online Judge API is running' });

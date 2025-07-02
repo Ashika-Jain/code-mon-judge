@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axiosInstance from '../utils/axiosConfig'; // Make sure this points to your axios config!
 import { FaUserCircle, FaEnvelope, FaMedal, FaCheckCircle } from 'react-icons/fa';
 import Navbar from './Navbar';

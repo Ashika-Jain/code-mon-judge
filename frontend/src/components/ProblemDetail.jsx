@@ -7,6 +7,27 @@ import Navbar from './Navbar';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://localhost:5001';
 
+const defaultTemplates = {
+  cpp: `#include <iostream>
+using namespace std;
+
+int main() {
+    // your code goes here
+    return 0;
+}`,
+  python: `# Write your code here
+def main():
+    pass
+
+if __name__ == "__main__":
+    main()` ,
+  java: `public class Main {
+    public static void main(String[] args) {
+        // your code goes here
+    }
+}`
+};
+
 const ProblemDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -27,6 +48,9 @@ const ProblemDetail = () => {
     const [runError, setRunError] = useState('');
     const [verdict, setVerdict] = useState('');
     const [theme, setTheme] = useState('light');
+    const [verdictMessage, setVerdictMessage] = useState('');
+    // Track previous language for template switching
+    const [prevLanguage, setPrevLanguage] = useState(language);
 
     console.log('=== ProblemDetail Component ===');
     console.log('1. Current location:', location.pathname);
@@ -117,6 +141,16 @@ const ProblemDetail = () => {
         }
     }, [id, isAuthenticated, navigate, location]);
 
+    useEffect(() => {
+        // Only set template if code is empty or matches the previous template
+        const prevTemplate = defaultTemplates[prevLanguage] || '';
+        if (!code.trim() || code.trim() === prevTemplate.trim()) {
+            setCode(defaultTemplates[language] || '');
+        }
+        setPrevLanguage(language);
+        // eslint-disable-next-line
+    }, [language]);
+
     const handleRun = async (e) => {
         e.preventDefault();
         setRunStatus('running');
@@ -141,13 +175,15 @@ const ProblemDetail = () => {
             );
             if (response.data && response.data.output) {
                 setCustomOutput(response.data.output);
+            } else if (response.data && response.data.message) {
+                setCustomOutput(response.data.message);
             } else {
                 setCustomOutput('');
             }
             setRunStatus('success');
         } catch (err) {
             setRunStatus('error');
-            setCustomOutput('');
+            setCustomOutput(err.response?.data?.message || 'Failed to run code. Please try again.');
             setRunError(err.response?.data?.message || 'Failed to run code. Please try again.');
         }
     };
@@ -224,12 +260,16 @@ const ProblemDetail = () => {
             );
 
             // Check the backend's status field
+            setVerdictMessage(response.data?.errorMessage || '');
             if (response.data && response.data.status === 'accepted') {
                 setSubmissionStatus('success');
+                window.location.reload(); // Force reload to update daily problem status
             } else if (response.data && response.data.status === 'wrong_answer') {
                 setSubmissionStatus('wrong');
             } else if (response.data && response.data.status === 'runtime_error') {
                 setSubmissionStatus('runtime_error');
+            } else if (response.data && response.data.status === 'time_limit_exceeded') {
+                setSubmissionStatus('time_limit_exceeded');
             } else {
                 setSubmissionStatus('error');
             }
@@ -237,6 +277,7 @@ const ProblemDetail = () => {
         } catch (err) {
             setSubmissionStatus('error');
             setCustomOutput('');
+            setVerdictMessage('');
             
             if (err.response?.status === 401) {
                 console.log('Unauthorized for submission, redirecting to login');
@@ -426,6 +467,8 @@ const ProblemDetail = () => {
                                 {submissionStatus === 'success' && <div className="text-green-700">Solution submitted successfully!</div>}
                                 {submissionStatus === 'wrong' && <div className="text-red-700">Wrong answer! Your solution did not pass all test cases.</div>}
                                 {submissionStatus === 'runtime_error' && <div className="text-orange-700">Runtime error occurred while running your code.</div>}
+                                {submissionStatus === 'time_limit_exceeded' && <div className="text-orange-700">Time limit exceeded.</div>}
+                                {verdictMessage && <div className="text-red-700">{verdictMessage}</div>}
                                 {submissionError && <div className="text-red-700">{submissionError}</div>}
                             </div>
                         )}

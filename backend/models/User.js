@@ -31,14 +31,6 @@ const userSchema = new mongoose.Schema({
         default: 'user',
         required: true
     },
-    problemsSolved: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Problem'
-    }],
-    submissions: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Submission'
-    }],
     createdAt: {
         type: Date,
         default: Date.now
@@ -71,7 +63,11 @@ const userSchema = new mongoose.Schema({
     submissions: {
         type: Number,
         default: 0
-    }
+    },
+    dailyProblemHistory: [{
+        date: String, // e.g., '2024-07-01'
+        problemId: String
+    }]
 });
 
 // Method to compare password

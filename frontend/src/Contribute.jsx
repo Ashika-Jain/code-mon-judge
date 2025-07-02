@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./Contribute.css";
-import axios from "axios";
+import axiosInstance from "./utils/axiosConfig";
 import My_image from "./assets/two.png";
 import { useNavigate } from "react-router-dom";
 import Upload from "./Upload.jsx";
@@ -66,8 +66,8 @@ function Contribute() {
     console.log(TestcasesDownloadLink);
     console.log(OutputsDownloadLink);
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/problems_post`,
+      const response = await axiosInstance.post(
+        `/api/problems`,
         {
           name,
           description,
@@ -79,8 +79,7 @@ function Contribute() {
           showtc,
           showoutput,
           constraints,
-        },
-        { withCredentials: true }
+        }
       );
       const data = response.data;
       console.log("data", response.data);

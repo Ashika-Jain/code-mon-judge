@@ -3,6 +3,7 @@ const Problem = require('../models/Problem');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const User = require('../models/User');
 
 // Helper function to create a temporary file
 const createTempFile = (code, language) => {
@@ -53,7 +54,11 @@ const runCode = (filePath, language, input) => {
 
     const process = exec(runCommands[language], { timeout: 5000 }, (error, stdout, stderr) => {
       if (error) {
-        reject(new Error(`Runtime error: ${stderr || error.message}`));
+        if (error.killed || error.signal === 'SIGTERM' || error.message.includes('timed out')) {
+          reject(new Error('Time limit exceeded'));
+        } else {
+          reject(new Error(`Runtime error: ${stderr || error.message}`));
+        }
       } else {
         resolve(stdout.trim());
       }
@@ -64,6 +69,17 @@ const runCode = (filePath, language, input) => {
     }
     process.stdin.end();
   });
+};
+
+const safeUnlink = (path) => {
+  try {
+    if (fs.existsSync(path)) fs.unlinkSync(path);
+  } catch (err) {
+    if (err.code !== 'EPERM') {
+      console.error('Error deleting file:', path, err);
+    }
+    // Ignore EPERM (Windows file lock issue)
+  }
 };
 
 // Submit code
@@ -133,21 +149,36 @@ exports.submitCode = async (req, res) => {
             submission.status = 'wrong_answer';
             submission.testCasesPassed = passedCases;
             await submission.save();
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            if (language === 'cpp' && fs.existsSync(`${filePath}.out`)) {
-              fs.unlinkSync(`${filePath}.out`);
-            }
-            return res.json(submission);
+            safeUnlink(filePath);
+            if (language === 'cpp') safeUnlink(`${filePath}.out`);
+            // Only send safe fields
+            return res.json({
+              _id: submission._id,
+              status: submission.status,
+              testCasesPassed: submission.testCasesPassed,
+              totalTestCases: submission.totalTestCases,
+              errorMessage: submission.errorMessage || ''
+            });
           }
         } catch (error) {
-          submission.status = 'runtime_error';
-          submission.errorMessage = error.message;
-          await submission.save();
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-          if (language === 'cpp' && fs.existsSync(`${filePath}.out`)) {
-            fs.unlinkSync(`${filePath}.out`);
+          if (error.message === 'Time limit exceeded') {
+            submission.status = 'time_limit_exceeded';
+            submission.errorMessage = error.message;
+          } else {
+            submission.status = 'runtime_error';
+            submission.errorMessage = error.message;
           }
-          return res.json(submission);
+          await submission.save();
+          safeUnlink(filePath);
+          if (language === 'cpp') safeUnlink(`${filePath}.out`);
+          // Only send safe fields
+          return res.json({
+            _id: submission._id,
+            status: submission.status,
+            testCasesPassed: submission.testCasesPassed,
+            totalTestCases: submission.totalTestCases,
+            errorMessage: submission.errorMessage || ''
+          });
         }
       }
 
@@ -155,17 +186,49 @@ exports.submitCode = async (req, res) => {
       submission.status = 'accepted';
       await submission.save();
 
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      if (language === 'cpp' && fs.existsSync(`${filePath}.out`)) {
-        fs.unlinkSync(`${filePath}.out`);
+      // Mark daily problem as done if this is today's daily problem
+      try {
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        // Get all problems to match daily logic
+        const allProblems = await Problem.find();
+        if (allProblems.length > 0) {
+          const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+          const dailyProblem = allProblems[dayOfYear % allProblems.length];
+          console.log('Checking daily problem marking:', {
+            todayStr,
+            submittedProblemId: problemId,
+            expectedDailyProblemId: dailyProblem?._id
+          });
+          if (dailyProblem && String(dailyProblem._id) === String(problemId)) {
+            const user = await User.findById(userId);
+            if (user && !user.dailyProblemHistory.some(e => e.date === todayStr)) {
+              user.dailyProblemHistory.push({ date: todayStr, problemId });
+              await user.save();
+              console.log('Saved dailyProblemHistory (auto mark):', user.dailyProblemHistory);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error marking daily problem as done:', err);
       }
 
-      res.json(submission);
+      safeUnlink(filePath);
+      if (language === 'cpp') safeUnlink(`${filePath}.out`);
+
+      // Only send safe fields
+      return res.json({
+        _id: submission._id,
+        status: submission.status,
+        testCasesPassed: submission.testCasesPassed,
+        totalTestCases: submission.totalTestCases,
+        errorMessage: submission.errorMessage || ''
+      });
     } catch (error) {
       submission.status = 'compilation_error';
       submission.errorMessage = error.message;
       await submission.save();
-      res.status(400).json({ message: error.message });
+      return res.status(400).json({ message: error.message });
     }
   } catch (error) {
     console.error("Unexpected error:", error);

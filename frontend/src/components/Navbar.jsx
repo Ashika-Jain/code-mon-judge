@@ -15,7 +15,7 @@ const Navbar = ({ onSearch }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const url = `${API_BASE_URL}/auth/check`;
+        const url = `${API_BASE_URL}/api/auth/check`;
         console.log('Calling auth check at:', url);
         const response = await axios.get(url, { withCredentials: true });
         console.log('Auth check response:', response.data);

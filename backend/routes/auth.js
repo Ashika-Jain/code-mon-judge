@@ -225,17 +225,76 @@ router.get('/profile', auth, async (req, res) => {
     if (user.submissions > 0) badges.push({ type: 'first_submission', label: 'First Submission' });
     if (user.problemsSolved >= 10) badges.push({ type: 'ten_solved', label: '10 Problems Solved' });
 
+    // Daily streak and today's daily problem solved
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const historyDates = Array.isArray(user.dailyProblemHistory) ? user.dailyProblemHistory.map(e => e.date) : [];
+    // Calculate streak
+    function getStreak(days) {
+      if (!days.length) return 0;
+      const sorted = [...days].sort();
+      let streak = 0;
+      let current = new Date(todayStr);
+      for (let i = sorted.length - 1; i >= 0; i--) {
+        if (sorted[i] === current.toISOString().slice(0, 10)) {
+          streak++;
+          current.setDate(current.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      return streak;
+    }
+    const streak = getStreak(historyDates);
+    const dailyProblemSolvedToday = historyDates.includes(todayStr);
+
     res.json({
       username: user.username,
       email: user.email,
       avatar: '', // Add avatar URL if available
       stats,
       badges,
-      recentSubmissions
+      recentSubmissions,
+      streak,
+      dailyProblemSolvedToday,
+      dailyProblemHistory: user.dailyProblemHistory
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/profile/daily
+// @desc    Mark daily problem as done for the user
+// @access  Private
+router.post('/profile/daily', auth, async (req, res) => {
+  const { date, problemId } = req.body;
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user.dailyProblemHistory.some(e => e.date === date)) {
+      user.dailyProblemHistory.push({ date, problemId });
+      await user.save();
+      console.log('Saved dailyProblemHistory (manual mark):', user.dailyProblemHistory);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Check if user is admin
+router.get('/check_if_admin', auth, async (req, res) => {
+  try {
+    if (req.user && req.user.role === 'admin') {
+      return res.json({ isAdmin: true });
+    } else {
+      return res.json({ isAdmin: false });
+    }
+  } catch (err) {
+    res.status(500).json({ isAdmin: false, error: err.message });
   }
 });
 

@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const cookieParser = require('cookie-parser');
+const passport = require('passport');
 
 // Load environment variables
 dotenv.config();
@@ -125,6 +126,41 @@ module.exports.logout_get = (req, res) => {
         secure: process.env.NODE_ENV === 'production'
     });
     res.status(200).json({ message: 'Logged out successfully' });
+};
+
+// Google OAuth routes
+module.exports.googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
+
+module.exports.googleCallback = (req, res) => {
+    passport.authenticate('google', { failureRedirect: '/login' }, async (err, user) => {
+        if (err) {
+            console.error('Google OAuth error:', err);
+            return res.redirect('/login?error=oauth_failed');
+        }
+        
+        if (!user) {
+            return res.redirect('/login?error=no_user');
+        }
+
+        try {
+            const token = createToken(user._id);
+            
+            // Set cookie for server-side access
+            res.cookie('jwt', token, {
+                httpOnly: true,
+                maxAge: 24 * 60 * 60 * 1000,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                secure: process.env.NODE_ENV === 'production'
+            });
+
+            // Redirect to frontend with token
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+            res.redirect(`${frontendUrl}/problems?token=${token}`);
+        } catch (error) {
+            console.error('Token creation error:', error);
+            res.redirect('/login?error=token_error');
+        }
+    })(req, res);
 };
 
 // Getting single problem

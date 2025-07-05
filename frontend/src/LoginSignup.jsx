@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axiosInstance from './utils/axiosConfig';
 import { useCookies } from 'react-cookie';
 import "./LoginSignup.css"
 import Swal from 'sweetalert2';
@@ -30,7 +30,7 @@ function LoginSignup() {
   const submit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/register`, data_send_to_backend, { withCredentials: true });
+      const res = await axiosInstance.post(`${API_BASE_URL}/api/auth/register`, data_send_to_backend, { withCredentials: true });
       const data = await res.data;
       
       if (data.errors) {
@@ -42,10 +42,12 @@ function LoginSignup() {
       if (data.token) {
         // Store user data in localStorage
         localStorage.setItem('user', JSON.stringify(data.user));
-        
+        // Store JWT token in localStorage for Navbar
+        localStorage.setItem('jwt', data.token);
+        // Trigger storage event for Navbar update
+        localStorage.setItem('authChanged', Date.now());
         // Set the JWT token as a cookie
         document.cookie = `jwt=${data.token}; path=/; secure; sameSite=None`;
-        
         // Show success message
         await Swal.fire({
           icon: 'success',
@@ -58,7 +60,6 @@ function LoginSignup() {
           allowEnterKey: false,
           stopKeydownPropagation: true
         });
-
         // Navigate after the message is shown
         navigate('/problems');
       }

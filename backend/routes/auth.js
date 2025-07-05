@@ -6,6 +6,7 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const Submission = require('../models/Submission');
 const Problem = require('../models/Problem');
+const authController = require('../controllers/authController');
 
 // @route   POST api/auth/register
 // @desc    Register a user
@@ -41,7 +42,7 @@ router.post('/register', async (req, res) => {
 
     const token = jwt.sign(
       payload,
-      process.env.JWT_SECRET || 'your-super-secret-jwt-key-123456789',
+      process.env.SECRET_KEY || 'your-super-secret-jwt-key-123456789',
       { expiresIn: '24h' }
     );
 
@@ -103,7 +104,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         role: user.role
       },
-      process.env.JWT_SECRET || 'your-super-secret-jwt-key-123456789',
+      process.env.SECRET_KEY || 'your-super-secret-jwt-key-123456789',
       { expiresIn: '24h' }
     );
 
@@ -159,7 +160,7 @@ router.get('/verify', async (req, res) => {
       return res.json({ valid: false });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-123456789');
+    const decoded = jwt.verify(token, process.env.SECRET_KEY || 'your-super-secret-jwt-key-123456789');
     const user = await User.findById(decoded.userId);
 
     if (!user) {
@@ -189,6 +190,102 @@ router.get('/check', auth, async (req, res) => {
     res.json({ isAuthenticated: true, user: req.user });
   } else {
     res.json({ isAuthenticated: false });
+  }
+});
+
+// Google OAuth routes
+// @route   GET /api/auth/google
+// @desc    Initiate Google OAuth
+// @access  Public
+router.get('/google', authController.googleAuth);
+
+// @route   GET /api/auth/google/callback
+// @desc    Google OAuth callback
+// @access  Public
+router.get('/google/callback', authController.googleCallback);
+
+// @route   POST /api/auth/google/token
+// @desc    Handle Google OAuth token and create/login user
+// @access  Public
+router.post('/google/token', async (req, res) => {
+  try {
+    const { access_token } = req.body;
+    
+    if (!access_token) {
+      return res.status(400).json({ message: 'Access token is required' });
+    }
+
+    // Verify the token with Google
+    const googleResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${access_token}`);
+    
+    if (!googleResponse.ok) {
+      return res.status(400).json({ message: 'Invalid access token' });
+    }
+
+    const googleUser = await googleResponse.json();
+    
+    // Check if user already exists
+    let user = await User.findOne({ email: googleUser.email });
+
+    if (user) {
+      // User exists, update Google ID if not set
+      if (!user.googleId) {
+        user.googleId = googleUser.id;
+        user.isGoogleUser = true;
+        await user.save();
+      }
+    } else {
+      // Create new user
+      user = new User({
+        googleId: googleUser.id,
+        email: googleUser.email,
+        username: googleUser.name.replace(/\s+/g, '').toLowerCase() + Math.random().toString(36).substr(2, 5),
+        firstname: googleUser.given_name || googleUser.name.split(' ')[0],
+        lastname: googleUser.family_name || googleUser.name.split(' ').slice(1).join(' ') || '',
+        avatar: googleUser.picture,
+        isGoogleUser: true,
+        role: 'user'
+      });
+
+      await user.save();
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user._id,
+        email: user.email,
+        role: user.role
+      },
+      process.env.SECRET_KEY || 'your-super-secret-jwt-key-123456789',
+      { expiresIn: '24h' }
+    );
+
+    // Set cookie
+    res.cookie('jwt', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+
+    // Send response with user data and token
+    res.json({
+      message: 'Google login successful',
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        firstname: user.firstname,
+        lastname: user.lastname
+      }
+    });
+
+  } catch (error) {
+    console.error('Google token verification error:', error);
+    res.status(500).json({ message: 'Server error during Google login' });
   }
 });
 

@@ -15,7 +15,9 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true
+        required: function() {
+            return !this.isGoogleUser; // Password not required for Google users
+        }
     },
     firstname: {
         type: String,
@@ -24,6 +26,18 @@ const userSchema = new mongoose.Schema({
     lastname: {
         type: String,
         required: true
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    avatar: {
+        type: String
+    },
+    isGoogleUser: {
+        type: Boolean,
+        default: false
     },
     role: {
         type: String,

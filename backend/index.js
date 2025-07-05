@@ -1,8 +1,12 @@
+require('dotenv').config();
 const express = require('express');
+
 const cors = require('cors');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
-require('dotenv').config();
+const session = require('express-session');
+const passport = require('./config/passport');
+
 
 const app = express();
 
@@ -20,6 +24,21 @@ app.options('*', cors({
 
 app.use(express.json());
 app.use(cookieParser());
+
+// Session configuration for Passport
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Test CORS route
 app.get('/test-cors', (req, res) => {

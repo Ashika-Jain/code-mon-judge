@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import axiosInstance from '../utils/axiosConfig'; // Make sure this points to your axios config!
 import { FaUserCircle, FaEnvelope, FaMedal, FaCheckCircle } from 'react-icons/fa';
 import Navbar from './Navbar';
+import useLogout from '../hooks/useLogout';
+import { useNavigate } from 'react-router-dom';
 
 const badgeIcons = {
   first_submission: <FaMedal className="text-yellow-500" />,
@@ -12,6 +14,8 @@ const badgeIcons = {
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const logout = useLogout();
+  const navigate = useNavigate();
 
   useEffect(() => {
     axiosInstance.get('/api/auth/profile')
@@ -21,6 +25,11 @@ const ProfilePage = () => {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
   if (!user) return <div className="text-center text-red-500 mt-8">Failed to load profile.</div>;
@@ -43,6 +52,13 @@ const ProfilePage = () => {
             <FaEnvelope className="mr-2" />
             <span>{user.email}</span>
           </div>
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded font-semibold shadow hover:scale-105 transition mb-6"
+          >
+            Logout
+          </button>
           {/* Stats */}
           <div className="flex gap-8 my-6 w-full justify-center">
             <div className="bg-blue-50 rounded-xl px-6 py-4 flex flex-col items-center border border-blue-100 shadow">

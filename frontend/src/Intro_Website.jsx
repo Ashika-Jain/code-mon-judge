@@ -3,6 +3,7 @@ import { TypeAnimation } from 'react-type-animation';
 import coderGif from './assets/coder.gif';
 import { FaGithub, FaLinkedin, FaDiscord } from 'react-icons/fa';
 import giphyGif from './assets/giphy.gif';
+import { useState, useEffect } from 'react';
 
 const testimonials = [
   {
@@ -37,9 +38,30 @@ const roadmap = [
 
 function Intro_Website() {
   const navigate = useNavigate();
+  const [firstProblemId, setFirstProblemId] = useState(null);
+
+  useEffect(() => {
+    async function fetchProblems() {
+      try {
+        const response = await fetch('/api/problems');
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setFirstProblemId(data[0]._id || data[0].id);
+        }
+      } catch (err) {
+        // fallback: go to problems list if fetch fails
+        setFirstProblemId(null);
+      }
+    }
+    fetchProblems();
+  }, []);
 
   function go_to_prob_list() {
-    navigate("/problems")
+    if (firstProblemId) {
+      navigate(`/problems/${firstProblemId}`);
+    } else {
+      navigate('/problems');
+    }
   }
 
   return (

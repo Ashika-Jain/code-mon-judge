@@ -39,7 +39,7 @@ const ProblemDetail = () => {
     const [error, setError] = useState(null);
     const [submissionStatus, setSubmissionStatus] = useState('idle');
     const [submissionError, setSubmissionError] = useState(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('jwt'));
     const [aiReview, setAiReview] = useState('');
     const [loadingReview, setLoadingReview] = useState(false);
     const [input, setInput] = useState('');
@@ -56,90 +56,22 @@ const ProblemDetail = () => {
     console.log('1. Current location:', location.pathname);
     console.log('2. Problem ID:', id);
 
-    // Verify authentication status on component mount and when token changes
-    useEffect(() => {
-        const verifyAuth = async () => {
-            const token = localStorage.getItem('jwt');
-            if (!token) {
-                console.log('No token found, redirecting to login');
-                navigate('/login', { 
-                    replace: true,
-                    state: { from: location.pathname }
-                });
-                return;
-            }
+    // Remove this useEffect that checks authentication and redirects to /login
 
-            try {
-                const response = await axiosInstance.get(`${API_BASE_URL}/api/auth/verify`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.data.valid) {
-                    console.log('Token invalid, redirecting to login');
-                    localStorage.removeItem('jwt');
-                    localStorage.removeItem('user');
-                    document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                    document.cookie = 'user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                    navigate('/login', { 
-                        replace: true,
-                        state: { from: location.pathname }
-                    });
-                    return;
-                }
-
-                setIsAuthenticated(true);
-            } catch (error) {
-                console.error('Auth verification failed:', error);
-                localStorage.removeItem('jwt');
-                localStorage.removeItem('user');
-                document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                document.cookie = 'user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                navigate('/login', { 
-                    replace: true,
-                    state: { from: location.pathname }
-                });
-            }
-        };
-
-        verifyAuth();
-    }, [navigate, location]);
-
-    // Fetch problem details only if authenticated
+    // Remove authentication check for fetching problem details
     useEffect(() => {
         const fetchProblem = async () => {
-            if (!isAuthenticated) return;
-
             try {
-                const token = localStorage.getItem('jwt');
-                const response = await axiosInstance.get(`${API_BASE_URL}/api/problems/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
+                const response = await axios.get(`${API_BASE_URL}/api/problems/${id}`);
                 setProblem(response.data);
                 setLoading(false);
             } catch (error) {
-                console.error('Error fetching problem:', error);
-                if (error.response?.status === 401) {
-                    setIsAuthenticated(false);
-                    navigate('/login', { 
-                        replace: true,
-                        state: { from: location.pathname }
-                    });
-                } else {
-                    setError('Failed to load problem details');
+                setError('Failed to load problem details');
                 setLoading(false);
-                }
             }
         };
-
-        if (isAuthenticated) {
-            fetchProblem();
-        }
-    }, [id, isAuthenticated, navigate, location]);
+        fetchProblem();
+    }, [id]);
 
     useEffect(() => {
         // Only set template if code is empty or matches the previous template
@@ -157,8 +89,7 @@ const ProblemDetail = () => {
         setRunError('');
         setCustomOutput('');
         try {
-            const token = localStorage.getItem('jwt');
-            const response = await axiosInstance.post(
+            const response = await axios.post(
                 `${API_BASE_URL}/api/submissions/submit`,
                 {
                     problemId: id,
@@ -166,11 +97,6 @@ const ProblemDetail = () => {
                     language: language.toLowerCase(),
                     input: input || "",
                     mode: "run"
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
                 }
             );
             if (response.data && response.data.output) {
@@ -188,16 +114,11 @@ const ProblemDetail = () => {
         }
     };
 
+    // Remove auth check for viewing, only check for submit
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // Double-check authentication before submission
         if (!isAuthenticated) {
-            console.log('Not authenticated, redirecting to login');
-            navigate('/login', { 
-                replace: true,
-                state: { from: location.pathname }
-            });
+            navigate('/login', { replace: true, state: { from: location.pathname } });
             return;
         }
 
@@ -308,14 +229,6 @@ const ProblemDetail = () => {
         }
         setLoadingReview(false);
     };
-
-    if (!isAuthenticated) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-        );
-    }
 
     if (loading) {
         return (
@@ -440,17 +353,17 @@ const ProblemDetail = () => {
                         <div className="flex gap-4 justify-end">
                             <button
                                 onClick={handleRun}
-                                disabled={runStatus === 'running' || !isAuthenticated}
+                                disabled={runStatus === 'running'}
                                 className="bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white px-4 py-2 rounded shadow transition disabled:bg-gray-400"
                             >
                                 {runStatus === 'running' ? 'Running...' : 'Run'}
                             </button>
                             <button
-                                onClick={handleSubmit}
-                                disabled={submissionStatus === 'submitting' || !isAuthenticated}
+                                onClick={isAuthenticated ? handleSubmit : () => navigate('/login', { replace: true, state: { from: location.pathname } })}
+                                disabled={submissionStatus === 'submitting'}
                                 className="bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white px-4 py-2 rounded shadow transition disabled:bg-gray-400"
                             >
-                                {submissionStatus === 'submitting' ? 'Submitting...' : 'Submit'}
+                                {isAuthenticated ? (submissionStatus === 'submitting' ? 'Submitting...' : 'Submit') : 'Login to Submit'}
                             </button>
                             <button
                                 onClick={handleAiReview}

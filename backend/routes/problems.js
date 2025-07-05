@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get a single problem
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const problem = await Problem.findById(req.params.id)
       .populate('createdBy', 'username');

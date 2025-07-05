@@ -52,8 +52,6 @@ const ProblemsList = () => {
         const fetchUserHistory = async () => {
             try {
                 const res = await axiosInstance.get('/api/auth/profile');
-                console.log('Fetched dailyProblemHistory:', res.data.dailyProblemHistory); // Debug log
-                // Save full history objects for mapping date to problemId
                 const historyArr = Array.isArray(res.data.dailyProblemHistory) ? res.data.dailyProblemHistory : [];
                 setCompletedDays(historyArr.map(e => e.date));
                 setMarkedToday(historyArr.map(e => e.date).includes(todayStr));
@@ -67,7 +65,14 @@ const ProblemsList = () => {
             }
         };
         fetchDailyProblem();
-        fetchUserHistory();
+        if (localStorage.getItem('jwt')) {
+            fetchUserHistory();
+        } else {
+            setCompletedDays([]);
+            setMarkedToday(false);
+            setStreak(0);
+            setHistoryMap({});
+        }
     }, []);
 
     // Streak calculation
@@ -90,29 +95,16 @@ const ProblemsList = () => {
     useEffect(() => {
         const fetchProblems = async () => {
             try {
-                console.log('ProblemsList: Starting to fetch problems');
-                const token = localStorage.getItem('jwt');
-                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-                console.log('ProblemsList: Making API request to fetch problems');
-                const response = await axiosInstance.get('/api/problems', {
-                    headers
-                });
-                console.log('ProblemsList: Received problems data:', response.data);
+                const response = await axiosInstance.get('/api/problems');
                 setProblems(response.data);
                 setLoading(false);
             } catch (err) {
-                console.error('ProblemsList: Error fetching problems:', err);
-                console.error('Error details:', {
-                    status: err.response?.status,
-                    data: err.response?.data,
-                    message: err.message
-                });
                 setError('Failed to fetch problems. Please try again later.');
                 setLoading(false);
             }
         };
         fetchProblems();
-    }, [navigate]);
+    }, []);
 
     const handleProblemClick = (problemId) => {
         console.log('ProblemsList: Navigating to problem:', problemId);

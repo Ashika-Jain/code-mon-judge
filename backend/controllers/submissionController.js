@@ -86,7 +86,14 @@ const safeUnlink = (path) => {
 exports.submitCode = async (req, res) => {
   try {
     const { problemId, code, language, input, mode } = req.body;
-    const userId = req.user.id;
+    // Only require authentication for 'submit' mode
+    let userId = null;
+    if (mode === 'submit') {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: 'Authentication required to submit solutions.' });
+      }
+      userId = req.user.id;
+    }
     console.log('MODE RECEIVED:', mode);
 
     // Get problem details

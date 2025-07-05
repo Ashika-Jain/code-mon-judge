@@ -54,50 +54,7 @@ function ShowSingleP({ user_id, prob_id, name, description, difficulty, tags, su
   }, [user_id, prob_id]);
 
   const handleClick = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('jwt');
-      
-      if (!token) {
-        console.log('ShowSingleP: No token found, redirecting to login');
-        navigate('/login', { replace: true });
-        return;
-      }
-
-      // Verify token before proceeding
-      const verifyResponse = await axiosInstance.get(`${API_BASE_URL}/api/auth/verify`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!verifyResponse.data.valid) {
-        console.log('ShowSingleP: Token invalid, redirecting to login');
-        localStorage.removeItem('jwt');
-        localStorage.removeItem('user');
-        document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        document.cookie = 'user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        navigate('/login', { replace: true });
-        return;
-      }
-
-      // If token is valid, navigate to problem detail
-      navigate(`/problems/${prob_id}`);
-    } catch (error) {
-      console.error('ShowSingleP: Error:', error);
-      if (error.response?.status === 401) {
-        console.log('ShowSingleP: Unauthorized, redirecting to login');
-        localStorage.removeItem('jwt');
-        localStorage.removeItem('user');
-        document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        document.cookie = 'user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        navigate('/login', { replace: true });
-      } else {
-        setError('Failed to access problem');
-      }
-    } finally {
-      setLoading(false);
-  }
+    navigate(`/problems/${prob_id}`);
   };
 
   return (
@@ -106,7 +63,6 @@ function ShowSingleP({ user_id, prob_id, name, description, difficulty, tags, su
       <div className="tags-entry">{tags}</div>
       <div className="submissions-entry">
         { (probsolved === "DONE" && <Checkmark size='24px' color='green' />)}
-        {/* { (probsolved !== "DONE" && <Checkmark size='16px' color='blue' />)} */}
       </div>
       <div className={`difficulty-level ${getDifficultyClass(difficulty)}`}>{difficulty}</div>
       <div className="action">

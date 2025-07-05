@@ -3,8 +3,8 @@ const router = express.Router();
 const submissionController = require('../controllers/submissionController');
 const auth = require('../middleware/auth');
 
-// Submit code
-router.post('/submit', auth, submissionController.submitCode);
+// Submit code (auth handled in controller for 'submit' mode only)
+router.post('/submit', submissionController.submitCode);
 
 // Get user's submissions
 router.get('/user', auth, submissionController.getUserSubmissions);

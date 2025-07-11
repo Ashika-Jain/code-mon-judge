@@ -4,6 +4,7 @@ import coderGif from './assets/coder.gif';
 import { FaGithub, FaLinkedin, FaDiscord } from 'react-icons/fa';
 import giphyGif from './assets/giphy.gif';
 import { useState, useEffect } from 'react';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://localhost:5001';
 
 const testimonials = [
   {
@@ -39,6 +40,8 @@ const roadmap = [
 function Intro_Website() {
   const navigate = useNavigate();
   const [firstProblemId, setFirstProblemId] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
 
   useEffect(() => {
     async function fetchProblems() {
@@ -49,11 +52,25 @@ function Intro_Website() {
           setFirstProblemId(data[0]._id || data[0].id);
         }
       } catch (err) {
-        // fallback: go to problems list if fetch fails
         setFirstProblemId(null);
       }
     }
     fetchProblems();
+  }, []);
+
+  useEffect(() => {
+    async function fetchLeaderboard() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/auth/leaderboard`);
+        const data = await res.json();
+        setLeaderboard(data.slice(0, 5));
+        setLoadingLeaderboard(false);
+      } catch (err) {
+        setLeaderboard([]);
+        setLoadingLeaderboard(false);
+      }
+    }
+    fetchLeaderboard();
   }, []);
 
   function go_to_prob_list() {
@@ -117,6 +134,39 @@ function Intro_Website() {
             <p className="text-gray-600 text-sm">{f.desc}</p>
           </div>
         ))}
+      </section>
+
+      {/* Leaderboard Section */}
+      <section className="max-w-3xl mx-auto py-8 px-4">
+        <h2 className="text-2xl font-bold mb-4 text-center">🏆 Top 5 Leaderboard</h2>
+        {loadingLeaderboard ? (
+          <div className="flex justify-center items-center h-20">Loading...</div>
+        ) : leaderboard.length === 0 ? (
+          <div className="text-gray-500 text-center">No leaderboard data available.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-xl shadow-lg">
+              <thead>
+                <tr>
+                  <th className="py-3 px-4 text-left">Rank</th>
+                  <th className="py-3 px-4 text-left">Name</th>
+                  <th className="py-3 px-4 text-left">Username</th>
+                  <th className="py-3 px-4 text-left">Points</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.map((user, idx) => (
+                  <tr key={user.userId} className={idx < 3 ? 'bg-yellow-50 font-bold' : ''}>
+                    <td className="py-2 px-4">{idx + 1}</td>
+                    <td className="py-2 px-4">{user.name}</td>
+                    <td className="py-2 px-4">{user.username}</td>
+                    <td className="py-2 px-4">{user.points}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {/* Testimonials Section */}

@@ -3,7 +3,7 @@ import axios from "axios";
 import { Pie } from "react-chartjs-2";
 import { Chart, ArcElement } from "chart.js/auto";
 import "./ProblemsList.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import User_img from "./assets/user.png";
 import ShowSingleP from "./ShowSingleP";
 import axiosInstance from "./utils/axiosConfig";
@@ -22,6 +22,7 @@ const ProblemsList = () => {
   const [mediumP, setMediumP] = useState(0);
   const [hardP, setHardP] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
   const [solved_easy, setSolved_easy] = useState(0);
   const [solved_basic, setSolved_basic] = useState(0);
   const [solved_medium, setSolved_medium] = useState(0);
@@ -44,7 +45,7 @@ const ProblemsList = () => {
         
         if (!token) {
           console.log('ProblemsList: No token found, redirecting to login');
-          navigate('/login', { replace: true });
+          navigate('/login', { replace: true, state: { from: location.pathname } });
           return;
         }
 
@@ -62,7 +63,7 @@ const ProblemsList = () => {
           localStorage.removeItem('user');
           document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
           document.cookie = 'user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          navigate('/login', { replace: true });
+          navigate('/login', { replace: true, state: { from: location.pathname } });
           return;
         }
 
@@ -87,7 +88,7 @@ const ProblemsList = () => {
             localStorage.removeItem('user');
             document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             document.cookie = 'user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            navigate('/login', { replace: true });
+            navigate('/login', { replace: true, state: { from: location.pathname } });
           } else {
             setError(error.response?.data?.message || 'Failed to fetch problems');
             setLoading(false);
@@ -101,7 +102,7 @@ const ProblemsList = () => {
     return () => {
       isMounted = false;
     };
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   useEffect(() => {
     const get_by_tag = async () => {

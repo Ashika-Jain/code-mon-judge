@@ -7,6 +7,8 @@ const auth = require('../middleware/auth');
 const Submission = require('../models/Submission');
 const Problem = require('../models/Problem');
 const authController = require('../controllers/authController');
+const dayjs = require('dayjs');
+const mongoose = require('mongoose');
 
 // @route   POST api/auth/register
 // @desc    Register a user
@@ -382,6 +384,69 @@ router.post('/profile/daily', auth, async (req, res) => {
   }
 });
 
+// Activity heatmap endpoint (last 6 months, accepted submissions)
+router.get('/activity-heatmap', auth, async (req, res) => {
+  try {
+    const Submission = require('../models/Submission');
+    const userId = req.user.id;
+    const today = dayjs().startOf('day');
+    const sixMonthsAgo = today.subtract(6, 'month');
+
+    // Get all accepted submissions for this user in the last 6 months
+    const submissions = await Submission.find({
+      userId,
+      status: 'accepted',
+      createdAt: { $gte: sixMonthsAgo.toDate(), $lte: today.toDate() }
+    });
+
+    // Map: date string (YYYY-MM-DD) -> count
+    const activity = {};
+    submissions.forEach(sub => {
+      const dateStr = dayjs(sub.createdAt).format('YYYY-MM-DD');
+      activity[dateStr] = (activity[dateStr] || 0) + 1;
+    });
+
+    res.json(activity);
+  } catch (err) {
+    console.error('Heatmap error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Yearly activity heatmap endpoint (accepted submissions)
+router.get('/activity-heatmap-year', auth, async (req, res) => {
+  const userId = req.user.id;
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+  try {
+    const data = await require('../models/Submission').aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId), status: 'accepted', createdAt: { $gte: oneYearAgo } } },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+            day: { $dayOfMonth: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Convert to { 'YYYY-MM-DD': count }
+    const result = {};
+    data.forEach(d => {
+      const date = `${d._id.year}-${String(d._id.month).padStart(2, '0')}-${String(d._id.day).padStart(2, '0')}`;
+      result[date] = d.count;
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Check if user is admin
 router.get('/check_if_admin', auth, async (req, res) => {
   try {
@@ -392,6 +457,52 @@ router.get('/check_if_admin', auth, async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ isAdmin: false, error: err.message });
+  }
+});
+
+// Leaderboard endpoint
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const Submission = require('../models/Submission');
+    const Problem = require('../models/Problem');
+    const User = require('../models/User');
+
+    // Get all accepted submissions, populate problem difficulty
+    const submissions = await Submission.find({ status: 'accepted' })
+      .populate('problemId', 'difficulty')
+      .populate('userId', 'username firstname lastname email');
+
+    // Map: userId -> { username, points, solvedProblems: Set }
+    const userMap = {};
+    submissions.forEach(sub => {
+      const userId = sub.userId._id.toString();
+      const username = sub.userId.username || sub.userId.email || 'Unknown';
+      const name = sub.userId.firstname ? `${sub.userId.firstname} ${sub.userId.lastname || ''}`.trim() : username;
+      const problemId = sub.problemId._id.toString();
+      const difficulty = sub.problemId.difficulty;
+      if (!userMap[userId]) {
+        userMap[userId] = { userId, username, name, points: 0, solvedProblems: new Set() };
+      }
+      // Only count unique problems per user
+      if (!userMap[userId].solvedProblems.has(problemId)) {
+        let pts = 1;
+        if (difficulty === 'Medium') pts = 2;
+        if (difficulty === 'Hard') pts = 3;
+        userMap[userId].points += pts;
+        userMap[userId].solvedProblems.add(problemId);
+      }
+    });
+
+    // Convert to array and sort by points desc
+    const leaderboard = Object.values(userMap)
+      .map(u => ({ userId: u.userId, username: u.username, name: u.name, points: u.points }))
+      .sort((a, b) => b.points - a.points)
+      .slice(0, 50); // Top 50
+
+    res.json(leaderboard);
+  } catch (err) {
+    console.error('Leaderboard error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const UserAccount = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          navigate('/login');
+          navigate('/login', { state: { from: location.pathname } });
           return;
         }
 
@@ -28,12 +29,12 @@ const UserAccount = () => {
       } catch (err) {
         console.error('Error fetching user:', err);
         setLoading(false);
-        navigate('/login');
+        navigate('/login', { state: { from: location.pathname } });
       }
     };
 
     fetchUser();
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   if (loading) {
     return <div>Loading...</div>;

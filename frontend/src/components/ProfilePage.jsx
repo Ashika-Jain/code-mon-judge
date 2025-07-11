@@ -4,6 +4,10 @@ import { FaUserCircle, FaEnvelope, FaMedal, FaCheckCircle } from 'react-icons/fa
 import Navbar from './Navbar';
 import useLogout from '../hooks/useLogout';
 import { useNavigate } from 'react-router-dom';
+import CalendarHeatmap from 'react-calendar-heatmap';
+import 'react-calendar-heatmap/dist/styles.css';
+import dayjs from 'dayjs';
+import ActivityHeatmap from './ActivityHeatmap';
 
 const badgeIcons = {
   first_submission: <FaMedal className="text-yellow-500" />,
@@ -16,6 +20,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const logout = useLogout();
   const navigate = useNavigate();
+  const [heatmapData, setHeatmapData] = useState([]);
 
   useEffect(() => {
     axiosInstance.get('/api/auth/profile')
@@ -24,6 +29,29 @@ const ProfilePage = () => {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    async function fetchHeatmap() {
+      try {
+        const res = await fetch('/api/auth/activity-heatmap', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt')}` }
+        });
+        const data = await res.json();
+        // Convert to array of { date, count }
+        const today = dayjs().startOf('day');
+        const sixMonthsAgo = today.subtract(6, 'month');
+        const days = [];
+        for (let d = 0; d <= today.diff(sixMonthsAgo, 'day'); d++) {
+          const date = sixMonthsAgo.add(d, 'day').format('YYYY-MM-DD');
+          days.push({ date, count: data[date] || 0 });
+        }
+        setHeatmapData(days);
+      } catch (err) {
+        setHeatmapData([]);
+      }
+    }
+    fetchHeatmap();
   }, []);
 
   const handleLogout = () => {
@@ -112,6 +140,11 @@ const ProfilePage = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+          {/* 6-Month Activity Heatmap */}
+          <div className="my-8">
+            <h2 className="text-xl font-bold mb-4">6-Month Activity Heatmap</h2>
+            <ActivityHeatmap />
           </div>
         </div>
       </section>

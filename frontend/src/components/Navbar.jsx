@@ -39,6 +39,7 @@ function Navbar() {
         {/* Right: Auth/Actions */}
         <div className="flex items-center gap-4 mt-2 md:mt-0 md:order-3 ml-auto">
           <Link to="/problems" className="hover:text-blue-600 font-semibold">Problems</Link>
+          <Link to="/leaderboard" className="hover:text-blue-600 font-semibold">Leaderboard</Link>
           {isLoggedIn && (
             <button
               onClick={handleContribute}

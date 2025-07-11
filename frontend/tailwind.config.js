@@ -8,5 +8,8 @@ export default {
     extend: {},
   },
   plugins: [],
+  safelist: [
+    'color-empty', 'color-github-1', 'color-github-2', 'color-github-3', 'color-github-4'
+  ],
 }
 

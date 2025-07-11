@@ -61,7 +61,7 @@ module.exports.problems = async (req, res) => {
         const decodedToken = jwt.verify(token, process.env.SECRET_KEY); // decoding --got user details like payload given and expiry time
         const user = await User.findById(decodedToken.id); //Fetching by userID
         console.log(user.easyP);
-        console.log(user.basicP);
+        console.log(user.basicP); 
         console.log(user.mediumP);
         console.log(user.hardP);
 

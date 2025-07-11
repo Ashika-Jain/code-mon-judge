@@ -13,6 +13,7 @@ import UserAccount from './components/UserAccount';
 import Upload from './Upload';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProfilePage from './components/ProfilePage';
+import Leaderboard from './components/Leaderboard';
 
 // Get Google Client ID from environment variable
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your-google-client-id';
@@ -31,6 +32,7 @@ function App() {
             <Route path="/submission_history/:id" element={<SubmissionHistory/>} />
             <Route path="/myaccount" element={<Myaccount/>} />
             <Route path="/account" element={<UserAccount />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
             {/* Protected Routes */}
             <Route path="/upload" element={
               <ProtectedRoute>

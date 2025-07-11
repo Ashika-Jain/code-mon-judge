@@ -4,7 +4,7 @@ import { useCookies } from 'react-cookie';
 import "./LoginSignup.css"
 import Swal from 'sweetalert2';
 import image from './assets/two.png'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
 
@@ -19,6 +19,7 @@ function LoginSignup() {
   const [cookies, setCookie] = useCookies(['jwt']); 
 
   const navigate = useNavigate(); 
+  const location = useLocation();
   const data_send_to_backend = {
     username,
     firstname,
@@ -89,7 +90,7 @@ function LoginSignup() {
   };
 
   function navigate_to_login(){
-    navigate('/login');
+    navigate('/login', { state: { from: location.pathname } });
   }
 
   return (

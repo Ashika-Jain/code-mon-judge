@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../utils/axiosConfig';
 import axios from 'axios';
 import CodeEditor from "../CodeEditor";
 import Navbar from './Navbar';
+import dayjs from 'dayjs';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://localhost:5001';
 
@@ -39,14 +40,13 @@ const ProblemDetail = () => {
     const [error, setError] = useState(null);
     const [submissionStatus, setSubmissionStatus] = useState('idle');
     const [submissionError, setSubmissionError] = useState(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('jwt'));
     const [aiReview, setAiReview] = useState('');
     const [loadingReview, setLoadingReview] = useState(false);
     const [input, setInput] = useState('');
     const [customOutput, setCustomOutput] = useState('');
     const [runStatus, setRunStatus] = useState('idle');
-    const [runError, setRunError] = useState('');
-    const [verdict, setVerdict] = useState('');
+    const [verdict, setVerdict] = useState(null);
+    const [polling, setPolling] = useState(false);
     const [theme, setTheme] = useState('light');
     const [verdictMessage, setVerdictMessage] = useState('');
     // Track previous language for template switching
@@ -86,7 +86,6 @@ const ProblemDetail = () => {
     const handleRun = async (e) => {
         e.preventDefault();
         setRunStatus('running');
-        setRunError('');
         setCustomOutput('');
         try {
             const response = await axios.post(
@@ -110,25 +109,39 @@ const ProblemDetail = () => {
         } catch (err) {
             setRunStatus('error');
             setCustomOutput(err.response?.data?.message || 'Failed to run code. Please try again.');
-            setRunError(err.response?.data?.message || 'Failed to run code. Please try again.');
         }
+    };
+
+    const pollForVerdict = (submissionId, token) => {
+        setPolling(true);
+        const interval = setInterval(async () => {
+            try {
+                const response = await axios.get(
+                    `${API_BASE_URL}/api/submissions/${submissionId}`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }
+                );
+                if (response.data && response.data.status && response.data.status !== 'pending') {
+                    setVerdict(response.data.status);
+                    setPolling(false);
+                    clearInterval(interval);
+                }
+            } catch (err) {
+                setPolling(false);
+                clearInterval(interval);
+            }
+        }, 2000);
     };
 
     // Remove auth check for viewing, only check for submit
     const handleSubmit = async (e) => {
+        console.log('Submit button clicked!');
         e.preventDefault();
-        if (!isAuthenticated) {
-            navigate('/login', { replace: true, state: { from: location.pathname } });
-            return;
-        }
-
+        console.log('JWT before submit:', localStorage.getItem('jwt'));
         const token = localStorage.getItem('jwt');
         if (!token) {
-            console.log('No token found for submission, redirecting to login');
-            navigate('/login', { 
-                replace: true,
-                state: { from: location.pathname }
-            });
+            navigate('/login', { replace: true, state: { from: location.pathname } });
             return;
         }
 
@@ -152,7 +165,7 @@ const ProblemDetail = () => {
 
             if (!verifyResponse.data.valid) {
                 console.log('Token invalid before submission, redirecting to login');
-                setIsAuthenticated(false);
+                console.log('Removing JWT');
                 localStorage.removeItem('jwt');
                 localStorage.removeItem('user');
                 document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
@@ -180,6 +193,11 @@ const ProblemDetail = () => {
                 }
             );
 
+            // Start polling for verdict
+            if (response.data && response.data.submissionId) {
+                pollForVerdict(response.data.submissionId, token);
+            }
+
             // Check the backend's status field
             setVerdictMessage(response.data?.errorMessage || '');
             if (response.data && response.data.status === 'accepted') {
@@ -202,7 +220,7 @@ const ProblemDetail = () => {
             
             if (err.response?.status === 401) {
                 console.log('Unauthorized for submission, redirecting to login');
-                setIsAuthenticated(false);
+                console.log('Removing JWT');
                 localStorage.removeItem('jwt');
                 localStorage.removeItem('user');
                 document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
@@ -359,11 +377,11 @@ const ProblemDetail = () => {
                                 {runStatus === 'running' ? 'Running...' : 'Run'}
                             </button>
                             <button
-                                onClick={isAuthenticated ? handleSubmit : () => navigate('/login', { replace: true, state: { from: location.pathname } })}
+                                onClick={handleSubmit}
                                 disabled={submissionStatus === 'submitting'}
                                 className="bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white px-4 py-2 rounded shadow transition disabled:bg-gray-400"
                             >
-                                {isAuthenticated ? (submissionStatus === 'submitting' ? 'Submitting...' : 'Submit') : 'Login to Submit'}
+                                {submissionStatus === 'submitting' ? 'Submitting...' : 'Submit'}
                             </button>
                             <button
                                 onClick={handleAiReview}
@@ -385,6 +403,8 @@ const ProblemDetail = () => {
                                 {submissionError && <div className="text-red-700">{submissionError}</div>}
                             </div>
                         )}
+                        {polling && <p>Judging your submission...</p>}
+                        {verdict && <p>{verdict}</p>}
                         {/* AI Review */}
                         <div className="mt-4 p-4 rounded bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 shadow">
                             <h3 className="font-semibold mb-2 text-purple-700">AI Review</h3>

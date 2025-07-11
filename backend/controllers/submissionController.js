@@ -4,6 +4,8 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const User = require('../models/User');
+const { sendSubmission } = require('../kafka/producer');
+const jwt = require('jsonwebtoken');
 
 // Helper function to create a temporary file
 const createTempFile = (code, language) => {
@@ -86,13 +88,47 @@ const safeUnlink = (path) => {
 exports.submitCode = async (req, res) => {
   try {
     const { problemId, code, language, input, mode } = req.body;
-    // Only require authentication for 'submit' mode
     let userId = null;
     if (mode === 'submit') {
-      if (!req.user || !req.user.id) {
+      // Manually extract and verify JWT
+      let token = null;
+      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        token = req.headers.authorization.split(' ')[1];
+      } else if (req.cookies && req.cookies.jwt) {
+        token = req.cookies.jwt;
+      }
+      if (!token) {
         return res.status(401).json({ message: 'Authentication required to submit solutions.' });
       }
-      userId = req.user.id;
+      let decoded;
+      try {
+        decoded = jwt.verify(token, process.env.SECRET_KEY || require('../secKey.json').SECRET_KEY);
+      } catch (err) {
+        return res.status(401).json({ message: 'Invalid or expired token.' });
+      }
+      userId = decoded.userId;
+      // Save submission to DB first
+      const submissionDoc = new Submission({
+        problemId,
+        userId,
+        code,
+        language,
+        totalTestCases: 0 // You can update this if needed
+      });
+      await submissionDoc.save();
+      // Enqueue submission to Kafka with _id
+      const submission = {
+        _id: submissionDoc._id,
+        userId,
+        code,
+        language,
+        problemId,
+        input,
+        // ...other fields as needed
+      };
+      console.log('Sending to Kafka:', submission); // Debug log
+      await sendSubmission(submission);
+      return res.status(202).json({ message: 'Submission queued for judging.', submissionId: submissionDoc._id });
     }
     console.log('MODE RECEIVED:', mode);
 
@@ -264,5 +300,18 @@ exports.getProblemSubmissions = async (req, res) => {
     res.json(submissions);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching submissions' });
+  }
+};
+
+// Get a single submission by ID for verdict polling
+exports.getSubmissionById = async (req, res) => {
+  try {
+    const submission = await Submission.findById(req.params.id);
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' });
+    }
+    res.json(submission);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
   }
 }; 

@@ -89,6 +89,7 @@ exports.submitCode = async (req, res) => {
   try {
     const { problemId, code, language, input, mode } = req.body;
     let userId = null;
+    const useKafka = process.env.USE_KAFKA === 'true';
     if (mode === 'submit') {
       // Manually extract and verify JWT
       let token = null;
@@ -116,19 +117,83 @@ exports.submitCode = async (req, res) => {
         totalTestCases: 0 // You can update this if needed
       });
       await submissionDoc.save();
-      // Enqueue submission to Kafka with _id
-      const submission = {
-        _id: submissionDoc._id,
-        userId,
-        code,
-        language,
-        problemId,
-        input,
-        // ...other fields as needed
-      };
-      console.log('Sending to Kafka:', submission); // Debug log
-      await sendSubmission(submission);
-      return res.status(202).json({ message: 'Submission queued for judging.', submissionId: submissionDoc._id });
+      // Use Kafka in local dev, otherwise judge synchronously
+      if (useKafka) {
+        // Enqueue submission to Kafka with _id
+        const submission = {
+          _id: submissionDoc._id,
+          userId,
+          code,
+          language,
+          problemId,
+          input,
+          // ...other fields as needed
+        };
+        console.log('Sending to Kafka:', submission); // Debug log
+        await sendSubmission(submission);
+        return res.status(202).json({ message: 'Submission queued for judging.', submissionId: submissionDoc._id });
+      } else {
+        // Synchronous judging (production/deployment)
+        // Get problem details
+        const problem = await Problem.findById(problemId);
+        if (!problem) {
+          return res.status(404).json({ message: 'Problem not found' });
+        }
+        // Judge logic (same as your old code)
+        const filePath = createTempFile(code, language);
+        let status = 'accepted';
+        let passedCases = 0;
+        let errorMessage = '';
+        let totalTestCases = problem.testCases.length;
+        try {
+          await compileCode(filePath, language);
+          for (const testCase of problem.testCases) {
+            try {
+              const output = await runCode(filePath, language, testCase.input);
+              if (output.trim() === testCase.output.trim()) {
+                passedCases++;
+              } else {
+                status = 'wrong_answer';
+                errorMessage = 'Wrong answer';
+                break;
+              }
+            } catch (err) {
+              if (err.message === 'Time limit exceeded') {
+                status = 'time_limit_exceeded';
+                errorMessage = err.message;
+              } else {
+                status = 'runtime_error';
+                errorMessage = err.message;
+              }
+              break;
+            }
+          }
+        } catch (err) {
+          status = 'compilation_error';
+          errorMessage = err.message;
+        }
+        safeUnlink(filePath);
+        if (language === 'cpp' && fs.existsSync(`${filePath}.out`)) {
+          safeUnlink(`${filePath}.out`);
+        }
+        // Update submission in DB
+        await Submission.findByIdAndUpdate(
+          submissionDoc._id,
+          {
+            status,
+            testCasesPassed: passedCases,
+            totalTestCases,
+            errorMessage
+          }
+        );
+        return res.status(200).json({
+          _id: submissionDoc._id,
+          status,
+          testCasesPassed: passedCases,
+          totalTestCases,
+          errorMessage
+        });
+      }
     }
     console.log('MODE RECEIVED:', mode);
 

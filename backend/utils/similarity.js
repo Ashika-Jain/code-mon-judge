@@ -2,7 +2,7 @@ const axios = require('axios');
 
 async function checkCodeSimilarity(newCode, previousCodes) {
   try {
-    const response = await axios.post('http://localhost:5005/check_similarity', {
+    const response = await axios.post('https://Ashika05-plag.hf.space/check_similarity', {
       code: newCode,
       previous_codes: previousCodes
     });

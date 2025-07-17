@@ -46,18 +46,27 @@ app.get('/test-cors', (req, res) => {
 });
 
 // Import the real aiCodeReview function
-const { aiCodeReview } = require('./aiCodeReview');
+const { aiCodeReview, aiHint, aiBoilerplate } = require('./aiCodeReview');
 
 app.post("/ai-review", async (req, res) => {
-    const { code } = req.body;
-    if (!code) {
-        return res.status(404).json({ success: false, error: "Empty code!" });
-    }
+    const { code, type, problem, language } = req.body;
     try {
-        const review = await aiCodeReview(code);
-        res.json({ "review": review });
+        let result;
+        if (type === "review") {
+            if (!code) return res.status(404).json({ success: false, error: "Empty code!" });
+            result = await aiCodeReview(code);
+        } else if (type === "hint") {
+            if (!problem) return res.status(404).json({ success: false, error: "No problem description!" });
+            result = await aiHint(problem);
+        } else if (type === "boilerplate") {
+            if (!problem || !language) return res.status(404).json({ success: false, error: "No problem or language!" });
+            result = await aiBoilerplate(problem, language);
+        } else {
+            return res.status(400).json({ error: "Invalid type" });
+        }
+        res.json({ result });
     } catch (error) {
-        res.status(500).json({ error: "Error in AI review, error: " + error.message });
+        res.status(500).json({ error: "Error in AI assist, error: " + error.message });
     }
 });
 

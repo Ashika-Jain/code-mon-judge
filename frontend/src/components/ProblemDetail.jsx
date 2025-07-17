@@ -4,7 +4,6 @@ import axiosInstance from '../utils/axiosConfig';
 import axios from 'axios';
 import CodeEditor from "../CodeEditor";
 import Navbar from './Navbar';
-import dayjs from 'dayjs';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://localhost:5001';
 
@@ -41,7 +40,8 @@ const ProblemDetail = () => {
     const [submissionStatus, setSubmissionStatus] = useState('idle');
     const [submissionError, setSubmissionError] = useState(null);
     const [aiReview, setAiReview] = useState('');
-    const [loadingReview, setLoadingReview] = useState(false);
+    const [aiHint, setAiHint] = useState('');
+    const [loadingAI, setLoadingAI] = useState(null); // null | 'review' | 'hint' | 'boilerplate'
     const [input, setInput] = useState('');
     const [customOutput, setCustomOutput] = useState('');
     const [runStatus, setRunStatus] = useState('idle');
@@ -51,6 +51,7 @@ const ProblemDetail = () => {
     const [verdictMessage, setVerdictMessage] = useState('');
     // Track previous language for template switching
     const [prevLanguage, setPrevLanguage] = useState(language);
+    const [similarityInfo, setSimilarityInfo] = useState(null);
 
     console.log('=== ProblemDetail Component ===');
     console.log('1. Current location:', location.pathname);
@@ -154,6 +155,7 @@ const ProblemDetail = () => {
         setSubmissionStatus('submitting');
         setSubmissionError(null);
         setCustomOutput('');
+        setSimilarityInfo(null); // Reset similarity info on new submit
 
         try {
             // Verify token again before submission
@@ -193,6 +195,19 @@ const ProblemDetail = () => {
                 }
             );
 
+            // --- Similarity Feedback Integration ---
+            if (typeof response.data.flagged !== 'undefined' && typeof response.data.similarity !== 'undefined') {
+                setSimilarityInfo({
+                    flagged: response.data.flagged,
+                    similarity: response.data.similarity
+                });
+                console.log('Similarity info set:', response.data.flagged, response.data.similarity);
+            } else {
+                setSimilarityInfo(null);
+                console.log('Similarity info not set, response:', response.data);
+            }
+            // --- End Similarity Feedback Integration ---
+
             // Start polling for verdict
             if (response.data && response.data.submissionId) {
                 pollForVerdict(response.data.submissionId, token);
@@ -202,7 +217,7 @@ const ProblemDetail = () => {
             setVerdictMessage(response.data?.errorMessage || '');
             if (response.data && response.data.status === 'accepted') {
                 setSubmissionStatus('success');
-                window.location.reload(); // Force reload to update daily problem status
+               // window.location.reload(); // Force reload to update daily problem status
             } else if (response.data && response.data.status === 'wrong_answer') {
                 setSubmissionStatus('wrong');
             } else if (response.data && response.data.status === 'runtime_error') {
@@ -217,6 +232,7 @@ const ProblemDetail = () => {
             setSubmissionStatus('error');
             setCustomOutput('');
             setVerdictMessage('');
+            setSimilarityInfo(null);
             
             if (err.response?.status === 401) {
                 console.log('Unauthorized for submission, redirecting to login');
@@ -235,17 +251,27 @@ const ProblemDetail = () => {
         }
     };
 
-    const handleAiReview = async () => {
-        const payload = { code, input };
-        setLoadingReview(true);
-        setAiReview('');
+    const fetchAI = async (type) => {
+        setLoadingAI(type);
         try {
-            const { data } = await axios.post(import.meta.env.VITE_GOOGLE_GEMINI_API_URL, payload);
-            setAiReview(data.review);
+            const payload = {
+                code,
+                type,
+                problem: problem?.description || '',
+                language
+            };
+            const { data } = await axios.post(`${API_BASE_URL}/ai-review`, payload);
+            if (type === "review") setAiReview(data.result);
+            if (type === "hint") setAiHint(data.result);
+            if (type === "boilerplate") {
+                setCode(data.result); // Set the editor value to the boilerplate
+            }
         } catch (error) {
-            setAiReview('Error in AI review, error: ' + error.message);
+            if (type === "review") setAiReview('Error: ' + error.message);
+            if (type === "hint") setAiHint('Error: ' + error.message);
+            // No need to set aiBoilerplate error
         }
-        setLoadingReview(false);
+        setLoadingAI(null);
     };
 
     if (loading) {
@@ -383,18 +409,21 @@ const ProblemDetail = () => {
                             >
                                 {submissionStatus === 'submitting' ? 'Submitting...' : 'Submit'}
                             </button>
-                            <button
-                                onClick={handleAiReview}
-                                disabled={loadingReview || !code.trim()}
-                                className="bg-gradient-to-r from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white px-4 py-2 rounded shadow transition disabled:bg-gray-400"
-                            >
-                                {loadingReview ? 'Reviewing...' : 'AI Review'}
-                            </button>
                         </div>
                         {/* Verdict/Feedback */}
                         {submissionStatus && (
                             <div className="mt-4 p-4 rounded bg-gradient-to-r from-green-50 to-blue-50 border border-blue-100 shadow">
                                 <h3 className="font-semibold mb-2 text-blue-700">Verdict / Feedback</h3>
+                                {console.log('Rendering similarityInfo:', similarityInfo)}
+                                {similarityInfo && (
+                                    <div className={"mb-2 p-2 rounded " + (similarityInfo.flagged ? "bg-red-100 text-red-700 border border-red-300" : "bg-green-100 text-green-700 border border-green-300") }>
+                                        {similarityInfo.flagged ? (
+                                            <>⚠️ Your code is very similar to previous submissions! Similarity: {Math.round(similarityInfo.similarity * 100)}%</>
+                                        ) : (
+                                            <>Similarity with previous submissions: {Math.round(similarityInfo.similarity * 100)}%</>
+                                        )}
+                                    </div>
+                                )}
                                 {submissionStatus === 'success' && <div className="text-green-700">Solution submitted successfully!</div>}
                                 {submissionStatus === 'wrong' && <div className="text-red-700">Wrong answer! Your solution did not pass all test cases.</div>}
                                 {submissionStatus === 'runtime_error' && <div className="text-orange-700">Runtime error occurred while running your code.</div>}
@@ -410,8 +439,80 @@ const ProblemDetail = () => {
                             <h3 className="font-semibold mb-2 text-purple-700">AI Review</h3>
                             <div className="text-gray-800 whitespace-pre-wrap min-h-[40px]">{aiReview}</div>
                         </div>
+                        <div className="mt-4 p-4 rounded bg-gradient-to-r from-green-50 to-blue-50 border border-green-100 shadow">
+                            <h3 className="font-semibold mb-2 text-green-700">AI Hint</h3>
+                            <div className="text-gray-800 whitespace-pre-wrap min-h-[40px]">{aiHint}</div>
+                        </div>
                     </div>
                 </div>
+            </div>
+            {/* Floating AI FAB Buttons */}
+            <style>{`
+            .ai-fab-container {
+              position: fixed;
+              bottom: 32px;
+              right: 32px;
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+              z-index: 1000;
+            }
+            .ai-fab-btn {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-weight: 600;
+              font-size: 1rem;
+              border-radius: 12px;
+              padding: 12px 24px;
+              box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+              background: #181c2f;
+              border: 2px solid transparent;
+              cursor: pointer;
+              transition: transform 0.1s, box-shadow 0.1s, border-color 0.2s;
+            }
+            .ai-fab-btn:active {
+              transform: scale(0.97);
+            }
+            .ai-fab-review {
+              border-color: #5b6ee1;
+              color: #5b6ee1;
+            }
+            .ai-fab-boilerplate {
+              border-color: #2ecc40;
+              color: #2ecc40;
+            }
+            .ai-fab-hint {
+              border-color: #f1c40f;
+              color: #f1c40f;
+            }
+            .ai-fab-btn:hover {
+              box-shadow: 0 8px 32px rgba(91,110,225,0.15);
+              background: #23284a;
+            }
+            `}</style>
+            <div className="ai-fab-container">
+              <button
+                className="ai-fab-btn ai-fab-review"
+                onClick={() => fetchAI("review")}
+                disabled={loadingAI === "review" || !code.trim()}
+              >
+                <span role="img" aria-label="robot">🤖</span> AI Review
+              </button>
+              <button
+                className="ai-fab-btn ai-fab-boilerplate"
+                onClick={() => fetchAI("boilerplate")}
+                disabled={loadingAI === "boilerplate"}
+              >
+                <span role="img" aria-label="test-tube">🧪</span> AI Boilerplate
+              </button>
+              <button
+                className="ai-fab-btn ai-fab-hint"
+                onClick={() => fetchAI("hint")}
+                disabled={loadingAI === "hint"}
+              >
+                <span role="img" aria-label="lightbulb">💡</span> AI Hint
+              </button>
             </div>
         </div>
     );

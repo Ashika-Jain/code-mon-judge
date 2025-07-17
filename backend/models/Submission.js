@@ -45,6 +45,14 @@ const submissionSchema = new mongoose.Schema({
   errorMessage: {
     type: String,
     default: ''
+  },
+  flagged: {
+    type: Boolean,
+    default: false
+  },
+  similarity: {
+    type: Number,
+    default: null
   }
 }, {
   timestamps: true

@@ -6,6 +6,7 @@ const path = require('path');
 const User = require('../models/User');
 const { sendSubmission } = require('../kafka/producer');
 const jwt = require('jsonwebtoken');
+const checkCodeSimilarity = require('../utils/similarity');
 
 // Helper function to create a temporary file
 const createTempFile = (code, language) => {
@@ -117,6 +118,34 @@ exports.submitCode = async (req, res) => {
         totalTestCases: 0 // You can update this if needed
       });
       await submissionDoc.save();
+
+      // --- Similarity Check Integration ---
+      console.log('Before similarity check (submissionDoc flow)');
+      const previousSubmissions = await Submission.find({
+        problemId,
+        userId: { $ne: userId }
+      }).select('code -_id');
+      console.log('Previous submissions found:', previousSubmissions.length);
+      const previousCodes = previousSubmissions.map(sub => sub.code);
+      const similarityResult = await checkCodeSimilarity(code, previousCodes);
+      console.log('Similarity result:', similarityResult);
+      let flagged = false;
+      let similarity = null;
+      if (similarityResult) {
+        similarity = similarityResult.max_similarity;
+        if (similarity > 0.8) flagged = true;
+      }
+      // Update submission with similarity info
+      submissionDoc.flagged = flagged;
+      submissionDoc.similarity = similarity;
+      try {
+        await submissionDoc.save();
+        console.log('Submission saved with similarity info (submissionDoc flow)');
+      } catch (err) {
+        console.error('Error saving submissionDoc with similarity info:', err);
+      }
+      // --- End Similarity Check Integration ---
+
       // Use Kafka in local dev, otherwise judge synchronously
       if (useKafka) {
         // Enqueue submission to Kafka with _id
@@ -191,7 +220,9 @@ exports.submitCode = async (req, res) => {
           status,
           testCasesPassed: passedCases,
           totalTestCases,
-          errorMessage
+          errorMessage,
+          flagged: submissionDoc.flagged,
+          similarity: submissionDoc.similarity
         });
       }
     }
@@ -238,6 +269,32 @@ exports.submitCode = async (req, res) => {
       totalTestCases: problem.testCases.length
     });
 
+    // --- Similarity Check Integration ---
+    console.log('Before similarity check (submission flow)');
+    const previousSubmissions = await Submission.find({
+      problemId,
+      userId: { $ne: userId }
+    }).select('code -_id');
+    console.log('Previous submissions found:', previousSubmissions.length);
+    const previousCodes = previousSubmissions.map(sub => sub.code);
+    const similarityResult = await checkCodeSimilarity(code, previousCodes);
+    console.log('Similarity result:', similarityResult);
+    let flagged = false;
+    let similarity = null;
+    if (similarityResult) {
+      similarity = similarityResult.max_similarity;
+      if (similarity > 0.8) flagged = true;
+    }
+    submission.flagged = flagged;
+    submission.similarity = similarity;
+    try {
+      await submission.save();
+      console.log('Submission saved with similarity info (submission flow)');
+    } catch (err) {
+      console.error('Error saving submission with similarity info:', err);
+    }
+    // --- End Similarity Check Integration ---
+
     // Save submission
     await submission.save();
 
@@ -265,7 +322,9 @@ exports.submitCode = async (req, res) => {
               status: submission.status,
               testCasesPassed: submission.testCasesPassed,
               totalTestCases: submission.totalTestCases,
-              errorMessage: submission.errorMessage || ''
+              errorMessage: submission.errorMessage || '',
+              flagged: submission.flagged,
+              similarity: submission.similarity
             });
           }
         } catch (error) {
@@ -285,7 +344,9 @@ exports.submitCode = async (req, res) => {
             status: submission.status,
             testCasesPassed: submission.testCasesPassed,
             totalTestCases: submission.totalTestCases,
-            errorMessage: submission.errorMessage || ''
+            errorMessage: submission.errorMessage || '',
+            flagged: submission.flagged,
+            similarity: submission.similarity
           });
         }
       }
@@ -330,13 +391,15 @@ exports.submitCode = async (req, res) => {
         status: submission.status,
         testCasesPassed: submission.testCasesPassed,
         totalTestCases: submission.totalTestCases,
-        errorMessage: submission.errorMessage || ''
+        errorMessage: submission.errorMessage || '',
+        flagged: submission.flagged,
+        similarity: submission.similarity
       });
     } catch (error) {
       submission.status = 'compilation_error';
       submission.errorMessage = error.message;
       await submission.save();
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({ message: error.message, flagged: submission.flagged, similarity: submission.similarity });
     }
   } catch (error) {
     console.error("Unexpected error:", error);
